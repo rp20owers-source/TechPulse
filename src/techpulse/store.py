@@ -303,6 +303,8 @@ class Store:
                     key = (sym, bar["date"])
                 elif kind == "assets":
                     sym = symbol_value(row.get("symbol", ""))
+                    if not row.get("name", "").strip():
+                        raise ValueError("Asset name is required")
                     if row.get("kind") not in KINDS:
                         raise ValueError("kind must be equity/crypto/benchmark")
                     record = dict(row) | provenance | {"symbol": sym}

@@ -4,6 +4,10 @@ Free, open-source, local-first **Windows desktop research preview** for technolo
 
 **Version 0.1 is a research preview, not the completed 65-requirement production product.** See the requirement matrix and roadmap for exact coverage. Synthetic demonstration data is explicitly fictional and is never silently substituted for research data. No calibrated forecasts or proven investment edge are claimed.
 
+![TechPulse fictional demonstration dashboard](docs/assets/dashboard.png)
+
+On Windows, double-click **Start-TechPulse.cmd** with Python 3.12–3.14 installed. First setup downloads the free, hash-locked dependencies; subsequent offline research needs no API key. See [the user guide](docs/USER_GUIDE.md), [CSV schemas](docs/IMPORT_FORMATS.md) and [all 65 requirement statuses](docs/REQUIREMENTS.md).
+
 ## Run from source
 
 Python 3.12–3.14 and [uv](https://docs.astral.sh/uv/) are supported.
@@ -32,3 +36,5 @@ All rankings are transparent research heuristics. Missing evidence reduces cover
 You are responsible for confirming permission to import, retain and export your data. The application ships no actual political disclosures or restricted market datasets. Automated political collection and public redistribution are disabled. Network provider coverage and terms are documented under docs/research/.
 
 MIT project code. Qt/PySide6 and bundled libraries have separate licenses; see THIRD_PARTY_NOTICES.md. Binary builds are preview artifacts until clean-machine and release gates pass.
+
+The first public release is source-only. `uv run python packaging/build_portable.py` builds a local Windows development artifact, which must pass the documented library-source, notice, security and clean-machine gates before public executable distribution.

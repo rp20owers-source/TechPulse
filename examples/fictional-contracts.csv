@@ -1,0 +1,2 @@
+id,company,ticker,mapping_confirmed,government,country,agency,purpose,status,award_date,announcement_date,duration,ceiling,obligated,technology,expansion,implications,risks,currency
+fictional-award-1,Fictional Example AI,EXAMPLE-AI,true,Fictional Republic,DEMO,Example Science Agency,Training example only,funded,2025-11-20,2025-11-21,2 fictional years,10000000,1000000,Research computing,Unfunded option,Illustration only,No investment meaning,USD

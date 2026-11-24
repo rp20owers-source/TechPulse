@@ -15,3 +15,5 @@ dist/
 !.env.example
 user-data/
 *.log
+smoke-state/
+runtime/

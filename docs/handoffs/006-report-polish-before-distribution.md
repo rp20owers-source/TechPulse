@@ -1,0 +1,15 @@
+# TechPulse current handoff
+
+- Agent/role: Codex report engineer; isolated feature/report-polish branch.
+- Date/phase/task: 2026-11-24; Phase10/11/12 reporting polish and PDF visual QA. Read prior handoff and PDF skill first.
+- Completed: shared readable HTML/PDF model, mover/crypto/options tables, complete award fields, evidence/scenario/weight theses, source catalog with separate price/metadata provenance, explicit display bounds, option/award metrics in full snapshots. JSON/CSV retain all underlying rows. Portable Unicode fallback declared visibly.
+- Modified: src/techpulse/reports.py; tests/test_reports_research.py; docs/research/REPORT_VALIDATION.md; this handoff and docs/handoffs/2026-11-24-before-report-polish.md.
+- Decisions:20 visible table/source rows;3 detailed awards/theses/setups; movers preserve10 leaders+10 laggards by known5P return. Never mutate or truncate underlying snapshot. PDF uses Helvetica and explicit unsupported-codepoint escapes; HTML/JSON retain Unicode. Zero company denominator withholds contract ratio. No new financial prediction.
+- Commands: Get-Content handoff/AGENTS/PDF skill/source/tests; apply_patch; shared-venv Ruff format/check, Mypy and Pytest with worktree PYTHONPATH; local fictional fixture exports; pdfinfo; pdftoppm scale-to1200; PNG contact-sheet creation and view_image visual inspection; git diff --check; commit.
+- Actual testing:10 report/research tests passed0.89s; Ruff and Mypy pass. Latest PDF examples: full demo7 pages, empty research2, typography/long-evidence stress2; all11 rendered/inspected, supplemented full-size award/source/Unicode checks. No clipping/overlap/tofu/footers collisions observed. Full app suite not rerun in this focused pass; lead owns integration checks.
+- Issues/blockers: PDF transliterates accents and uses explicit U+XXXX escapes for non-Latin glyphs, documented; no bundled cross-platform Unicode font. Human formats intentionally bounded; complete JSON/CSV retained. Parent notified GUI contract ratio should also withhold zero revenue/cap. Poppler emits unrelated Symbol/ArialUnicode config warnings; inspected ASCII PDF output unaffected.
+- Failed approaches: initial lambda lint and translation-map/catalog Mypy inference errors fixed; one patch pre-format context rejected without mutation and reapplied. Initial10-page draft consolidated to7 pages after inspection.
+- Dependencies: none added.
+- Branch/checkpoint: feature/report-polish; baseccdc750; report commit follows this handoff. QA files outside Git at work/reports-qa for lead copying into final outputs after integration.
+- Next: lead integrate commit; run full app/tests/lint/types; regenerate final fictional example PDF/HTML from integrated source; complete packaging/docs/release gates.
+- Acceptance: all14 sections readable and honest; financial/source semantics retained; full exports complete; PDF latest pages rendered and inspected; no secret/restricted or fabricated observed data included; final source checkpoint and actual checks recorded.

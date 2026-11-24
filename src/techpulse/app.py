@@ -451,9 +451,9 @@ class MainWindow(QMainWindow):
     def price_chart(self, symbol, height=330):
         chart = pg.PlotWidget(axisItems={"bottom": pg.DateAxisItem(utcOffset=0)})
         chart.setBackground(self.colors["panel"])
-        chart.setMinimumHeight(height)
+        chart.setFixedHeight(height)
         chart.showGrid(x=False, y=True, alpha=0.12)
-        chart.setLabel("left", "Price", units="USD")
+        chart.setLabel("left", "Price", units="USD", color=self.colors["muted"])
         chart.setMenuEnabled(False)
         for axis in ("left", "bottom"):
             chart.getAxis(axis).setTextPen(self.colors["muted"])
