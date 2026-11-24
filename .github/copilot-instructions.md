@@ -1,0 +1,1 @@
+Read AGENTS.md, PROJECT_HANDOFF.md and docs/architecture/ARCHITECTURE.md before modifying code. Update the handoff after each development pass. Never present synthetic fixtures as market observations or heuristic scores as probabilities.
