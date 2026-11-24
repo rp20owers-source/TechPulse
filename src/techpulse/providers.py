@@ -58,11 +58,16 @@ class _RateGate:
     last: ClassVar[dict[str, float]] = {}
 
     @classmethod
-    def wait(cls, host: str, minimum_interval: float) -> None:
+    def wait(cls, host: str, minimum_interval: float, deadline: float) -> None:
         with cls.lock:
-            remaining = cls.last.get(host, -math.inf) + minimum_interval - time.monotonic()
-            if remaining > 0:
-                time.sleep(remaining)
+            now = time.monotonic()
+            wait = cls.last.get(host, -math.inf) + minimum_interval - now
+            if deadline <= now or wait >= deadline - now:
+                raise ProviderError(
+                    "Provider operation budget exhausted while waiting for its rate limit; retry later."
+                )
+            if wait > 0:
+                time.sleep(wait)
             cls.last[host] = time.monotonic()
 
 
@@ -71,6 +76,8 @@ class _HTTPProvider:
     base_url = ""
     interval = 1.0
     max_bytes = 8 * 1024 * 1024
+    operation_budget = 60.0
+    phase_timeout = 5.0
 
     def __init__(self, *, client: httpx.Client | None = None) -> None:
         self._client = client or httpx.Client(
@@ -90,50 +97,89 @@ class _HTTPProvider:
     def __exit__(self, *_: object) -> None:
         self.close()
 
+    def _remaining(self, deadline: float) -> float:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise ProviderError(f"{self.name} operation budget exhausted; narrow the request or retry later.")
+        return remaining
+
+    def _sleep(self, delay: float, deadline: float) -> None:
+        if delay >= self._remaining(deadline):
+            raise ProviderError(f"{self.name} retry would exceed its operation budget; retry later.")
+        time.sleep(delay)
+        self._remaining(deadline)
+
     def _request(
-        self, method: str, path: str, *, headers: dict | None = None,
-        params: dict | None = None, payload: dict | None = None,
+        self,
+        method: str,
+        path: str,
+        *,
+        headers: dict | None = None,
+        params: dict | None = None,
+        payload: dict | None = None,
+        deadline: float | None = None,
     ) -> Any:
         """At most three attempts; obey short Retry-After, defer long cooldowns.
 
+        The caller shares one monotonic operation budget across all pages.
+        Budget checks occur between chunks and phases; an in-flight blocking
+        phase can exceed the budget by up to its at-most-five-second timeout.
         Errors intentionally omit provider response bodies and exception text,
         which can contain API keys or untrusted HTML. Redirects are never followed.
         """
         url = self.base_url + path
+        deadline = deadline if deadline is not None else time.monotonic() + self.operation_budget
         for attempt in range(3):
-            _RateGate.wait(self.base_url, self.interval)
+            self._remaining(deadline)
+            _RateGate.wait(self.base_url, self.interval, deadline)
+            timeout = min(self.phase_timeout, self._remaining(deadline))
             try:
                 with self._client.stream(
-                    method, url, headers=headers, params=params, json=payload,
-                    timeout=httpx.Timeout(20.0, connect=10.0),
+                    method,
+                    url,
+                    headers=headers,
+                    params=params,
+                    json=payload,
+                    timeout=httpx.Timeout(timeout),
                     follow_redirects=False,
                 ) as response:
                     status = response.status_code
                     if status in (429, 502, 503, 504):
                         if attempt == 2:
-                            raise ProviderError(f"{self.name} temporarily unavailable (HTTP {status}); retry later.")
+                            raise ProviderError(
+                                f"{self.name} temporarily unavailable (HTTP {status}); retry later."
+                            )
                         delay = self._retry_delay(response.headers.get("Retry-After"), attempt)
                         if delay > 10:
                             raise ProviderError(f"{self.name} requests a cooldown; retry later.")
-                        time.sleep(delay)
+                        self._sleep(delay, deadline)
                         continue
                     if status in (401, 403):
-                        raise ProviderError(f"{self.name} access denied; check credentials, terms and free-feed entitlement.")
+                        raise ProviderError(
+                            f"{self.name} access denied; check credentials, terms and free-feed entitlement."
+                        )
                     if not 200 <= status < 300:
                         raise ProviderError(f"{self.name} request failed (HTTP {status}).")
                     content = bytearray()
                     for chunk in response.iter_bytes():
+                        self._remaining(deadline)
                         content.extend(chunk)
                         if len(content) > self.max_bytes:
-                            raise ProviderError(f"{self.name} response exceeded the safe size limit; narrow the query.")
+                            raise ProviderError(
+                                f"{self.name} response exceeded the safe size limit; narrow the query."
+                            )
                     try:
-                        return json.loads(content)
+                        data = json.loads(content)
+                        self._remaining(deadline)
+                        return data
                     except (json.JSONDecodeError, UnicodeDecodeError):
                         raise ProviderError(f"{self.name} returned invalid JSON.") from None
             except httpx.RequestError:
                 if attempt == 2:
-                    raise ProviderError(f"{self.name} network request failed; cached data was not replaced.") from None
-                time.sleep(float(2**attempt))
+                    raise ProviderError(
+                        f"{self.name} network request failed; cached data was not replaced."
+                    ) from None
+                self._sleep(float(2**attempt), deadline)
         raise ProviderError(f"{self.name} request exhausted its retry limit.")
 
     @staticmethod
@@ -174,10 +220,20 @@ class CoinGeckoProvider(_HTTPProvider):
         self._headers = {"x-cg-demo-api-key": api_key.strip()}
 
     def markets(self) -> list[dict]:
+        deadline = time.monotonic() + self.operation_budget
         rows = self._request(
-            "GET", "/api/v3/coins/markets", headers=self._headers,
-            params={"vs_currency": "usd", "order": "market_cap_desc", "per_page": 100,
-                    "page": 1, "sparkline": "false", "price_change_percentage": "24h,7d,30d"},
+            "GET",
+            "/api/v3/coins/markets",
+            headers=self._headers,
+            deadline=deadline,
+            params={
+                "vs_currency": "usd",
+                "order": "market_cap_desc",
+                "per_page": 100,
+                "page": 1,
+                "sparkline": "false",
+                "price_change_percentage": "24h,7d,30d",
+            },
         )
         if not isinstance(rows, list) or len(rows) > 100:
             raise ProviderError("CoinGecko returned an unexpected market snapshot schema.")
@@ -191,22 +247,28 @@ class CoinGeckoProvider(_HTTPProvider):
             if coin_id in seen:
                 raise ProviderError("CoinGecko returned duplicate coin identifiers.")
             seen.add(coin_id)
-            result.append({
-                "id": coin_id, "symbol": _text(row.get("symbol")).upper(),
-                "name": _text(row.get("name")), "kind": "crypto", "category": "Unclassified",
-                "price": _number(row.get("current_price"), nonnegative=True),
-                "market_cap": _number(row.get("market_cap"), nonnegative=True),
-                "volume": _number(row.get("total_volume"), nonnegative=True),
-                "day_pct": _number(row.get("price_change_percentage_24h")),
-                "week_pct": _number(row.get("price_change_percentage_7d_in_currency")),
-                "month_pct": _number(row.get("price_change_percentage_30d_in_currency")),
-                "as_of": _text(row.get("last_updated")) or None,
-                "source": "Data provided by CoinGecko",
-                "source_url": "https://www.coingecko.com/en/coins/" + quote(coin_id, safe=""),
-                "fetched_at": fetched,
-                "coverage": "Top 100 USD coins by market cap only; snapshot, unclassified categories; not the entire crypto market.",
-                "redistributable": False,
-            })
+            result.append(
+                {
+                    "id": coin_id,
+                    "symbol": _text(row.get("symbol")).upper(),
+                    "name": _text(row.get("name")),
+                    "kind": "crypto",
+                    "category": "Unclassified",
+                    "price": _number(row.get("current_price"), nonnegative=True),
+                    "market_cap": _number(row.get("market_cap"), nonnegative=True),
+                    "volume": _number(row.get("total_volume"), nonnegative=True),
+                    "day_pct": _number(row.get("price_change_percentage_24h")),
+                    "week_pct": _number(row.get("price_change_percentage_7d_in_currency")),
+                    "month_pct": _number(row.get("price_change_percentage_30d_in_currency")),
+                    "as_of": _text(row.get("last_updated")) or None,
+                    "source": "Data provided by CoinGecko",
+                    "source_url": "https://www.coingecko.com/en/coins/" + quote(coin_id, safe=""),
+                    "fetched_at": fetched,
+                    "coverage": "Top 100 USD coins by market cap only; snapshot, unclassified categories; not the entire crypto market.",
+                    "redistributable": False,
+                }
+            )
+        self._remaining(deadline)
         return result
 
 
@@ -225,7 +287,11 @@ class AlpacaProvider(_HTTPProvider):
     interval = 0.6  # conservative 100/min, below current Basic 200/min
 
     def __init__(
-        self, key: str, secret: str, *, client: httpx.Client | None = None,
+        self,
+        key: str,
+        secret: str,
+        *,
+        client: httpx.Client | None = None,
         max_pages: int = 20,
     ) -> None:
         if not key or not secret:
@@ -245,20 +311,34 @@ class AlpacaProvider(_HTTPProvider):
         if len(normalized) != len(symbols):
             raise ValueError("Symbols must be valid and unique after normalization.")
         try:
-            if not all(isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) for value in (start, end)):
+            if not all(
+                isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) for value in (start, end)
+            ):
                 raise ValueError
             first, last = date.fromisoformat(start), date.fromisoformat(end)
         except (ValueError, TypeError):
             raise ValueError("Start and end must be ISO dates.") from None
         if first > last:
             raise ValueError("Start must be on or before end.")
-        params = {"symbols": ",".join(normalized), "timeframe": "1Day", "start": start,
-                  "end": end + "T23:59:59Z", "limit": 10000, "feed": "iex", "adjustment": "all", "sort": "asc"}
+        params = {
+            "symbols": ",".join(normalized),
+            "timeframe": "1Day",
+            "start": start,
+            "end": end + "T23:59:59Z",
+            "limit": 10000,
+            "feed": "iex",
+            "adjustment": "all",
+            "sort": "asc",
+        }
         result: dict[str, list[dict]] = {symbol: [] for symbol in normalized}
         fetched = _now()
         seen_tokens = set()
+        deadline = time.monotonic() + self.operation_budget
         for page in range(self._max_pages):
-            data = self._request("GET", "/v2/stocks/bars", headers=self._headers, params=params)
+            self._remaining(deadline)
+            data = self._request(
+                "GET", "/v2/stocks/bars", headers=self._headers, params=params, deadline=deadline
+            )
             if not isinstance(data, dict) or not isinstance(data.get("bars"), dict):
                 raise ProviderError("Alpaca returned an unexpected bars schema.")
             for symbol, rows in data["bars"].items():
@@ -277,17 +357,33 @@ class AlpacaProvider(_HTTPProvider):
                         raise ProviderError("Alpaca returned an invalid bar timestamp.") from None
                     if not start <= day <= end:
                         raise ProviderError("Alpaca returned bars outside the requested date range.")
-                    numbers = {full: _number(row.get(short), nonnegative=True) for full, short in
-                               (("open", "o"), ("high", "h"), ("low", "l"), ("close", "c"), ("volume", "v"))}
+                    numbers = {
+                        full: _number(row.get(short), nonnegative=True)
+                        for full, short in (
+                            ("open", "o"),
+                            ("high", "h"),
+                            ("low", "l"),
+                            ("close", "c"),
+                            ("volume", "v"),
+                        )
+                    }
                     o, h, low, c = (numbers[k] for k in ("open", "high", "low", "close"))
                     if o is None or h is None or low is None or c is None or numbers["volume"] is None:
                         raise ProviderError("Alpaca returned an incomplete OHLCV bar.")
                     if min(o, h, low, c) <= 0 or low > min(o, c) or h < max(o, c) or low > h:
                         raise ProviderError("Alpaca returned incoherent OHLC prices.")
-                    result[symbol].append({"date": day, **numbers,
-                        "source": "Alpaca IEX", "source_url": "https://alpaca.markets/data",
-                        "fetched_at": fetched, "adjustment": "all", "redistributable": False,
-                        "coverage": "IEX exchange feed only; adjusted prices; volume is not consolidated US volume."})
+                    result[symbol].append(
+                        {
+                            "date": day,
+                            **numbers,
+                            "source": "Alpaca IEX",
+                            "source_url": "https://alpaca.markets/data",
+                            "fetched_at": fetched,
+                            "adjustment": "all",
+                            "redistributable": False,
+                            "coverage": "IEX exchange feed only; adjusted prices; volume is not consolidated US volume.",
+                        }
+                    )
             token = data.get("next_page_token")
             if not token:
                 break
@@ -296,11 +392,14 @@ class AlpacaProvider(_HTTPProvider):
             seen_tokens.add(token)
             params["page_token"] = token
         else:
-            raise ProviderError("Alpaca history exceeded the page budget; narrow dates or symbols. No partial history returned.")
+            raise ProviderError(
+                "Alpaca history exceeded the page budget; narrow dates or symbols. No partial history returned."
+            )
         for rows in result.values():
             rows.sort(key=lambda r: r["date"])
             if len({r["date"] for r in rows}) != len(rows):
                 raise ProviderError("Alpaca returned duplicate daily bars; cached data was not replaced.")
+        self._remaining(deadline)
         return result
 
 
@@ -325,12 +424,30 @@ class USAspendingProvider(_HTTPProvider):
             raise ValueError("Search keyword must contain 2 to 200 characters.")
         payload = {
             "filters": {"keywords": [keyword.strip()], "award_type_codes": ["A", "B", "C", "D"]},
-            "fields": ["Award ID", "Recipient Name", "Awarding Agency", "Award Amount", "Description",
-                       "Start Date", "End Date", "Base Obligation Date", "generated_internal_id"],
-            "page": 1, "limit": 100, "sort": "Start Date", "order": "desc", "subawards": False,
+            "fields": [
+                "Award ID",
+                "Recipient Name",
+                "Awarding Agency",
+                "Award Amount",
+                "Description",
+                "Start Date",
+                "End Date",
+                "Base Obligation Date",
+                "generated_internal_id",
+            ],
+            "page": 1,
+            "limit": 100,
+            "sort": "Start Date",
+            "order": "desc",
+            "subawards": False,
         }
-        data = self._request("POST", "/api/v2/search/spending_by_award/", payload=payload)
-        if not isinstance(data, dict) or not isinstance(data.get("results"), list) or len(data["results"]) > 100:
+        deadline = time.monotonic() + self.operation_budget
+        data = self._request("POST", "/api/v2/search/spending_by_award/", payload=payload, deadline=deadline)
+        if (
+            not isinstance(data, dict)
+            or not isinstance(data.get("results"), list)
+            or len(data["results"]) > 100
+        ):
             raise ProviderError("USAspending returned an unexpected search schema.")
         fetched = _now()
         result = []
@@ -347,23 +464,37 @@ class USAspendingProvider(_HTTPProvider):
                 continue
             seen.add(identity)
             start, end = _text(row.get("Start Date")), _text(row.get("End Date"))
-            result.append({
-                "award_id": identity, "award_number": award_id,
-                "company": _text(row.get("Recipient Name"), "Unknown recipient"), "ticker": None,
-                "government": "United States", "country": "US",
-                "agency": _text(row.get("Awarding Agency"), "Unavailable"),
-                "purpose": _text(row.get("Description"), "Unavailable"),
-                "award_date": _text(row.get("Base Obligation Date")) or None,
-                "announcement_date": None, "start_date": start or None, "end_date": end or None,
-                "duration": f"{start or 'unknown'} to {end or 'unknown'}", "ceiling": None,
-                "obligated": _number(row.get("Award Amount")), "status": "award",
-                "technology": None, "expansion": None,
-                "implications": "Requires verified public-company mapping and company financial context before investment interpretation.",
-                "risks": "Obligations may be revised or deobligated; not recognized revenue. Contract ceiling unavailable in this search.",
-                "source": "USAspending.gov", "source_url": (
-                    "https://www.usaspending.gov/award/" + quote(internal, safe="") if internal else
-                    "https://www.usaspending.gov/search"),
-                "fetched_at": fetched,
-                "coverage": "At most 100 recent-starting US prime contract awards matching keyword; not global procurement or confirmed listed-company exposure.",
-            })
+            result.append(
+                {
+                    "award_id": identity,
+                    "award_number": award_id,
+                    "company": _text(row.get("Recipient Name"), "Unknown recipient"),
+                    "ticker": None,
+                    "government": "United States",
+                    "country": "US",
+                    "agency": _text(row.get("Awarding Agency"), "Unavailable"),
+                    "purpose": _text(row.get("Description"), "Unavailable"),
+                    "award_date": _text(row.get("Base Obligation Date")) or None,
+                    "announcement_date": None,
+                    "start_date": start or None,
+                    "end_date": end or None,
+                    "duration": f"{start or 'unknown'} to {end or 'unknown'}",
+                    "ceiling": None,
+                    "obligated": _number(row.get("Award Amount")),
+                    "status": "award",
+                    "technology": None,
+                    "expansion": None,
+                    "implications": "Requires verified public-company mapping and company financial context before investment interpretation.",
+                    "risks": "Obligations may be revised or deobligated; not recognized revenue. Contract ceiling unavailable in this search.",
+                    "source": "USAspending.gov",
+                    "source_url": (
+                        "https://www.usaspending.gov/award/" + quote(internal, safe="")
+                        if internal
+                        else "https://www.usaspending.gov/search"
+                    ),
+                    "fetched_at": fetched,
+                    "coverage": "At most 100 recent-starting US prime contract awards matching keyword; not global procurement or confirmed listed-company exposure.",
+                }
+            )
+        self._remaining(deadline)
         return result
