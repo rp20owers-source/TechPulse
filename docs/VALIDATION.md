@@ -4,7 +4,7 @@ Date:2026-11-24. Local host:Windows11 x64, Python3.14.7. This record distinguish
 
 ## Verified source behavior
 
-- Full suite after report integration: **102 tests passed plus5 subtests**. Includes28 analytics tests,39 provider tests and integration coverage for imports/storage/accounting/chronology/source isolation/reports/Qt navigation. The reported total is Pytest's actual total, not a feature count.
+- Final full suite (including zero-revenue/capitalization contract regression): **103 tests passed plus5 subtests**. Includes28 analytics tests,39 provider tests and integration coverage for imports/storage/accounting/chronology/source isolation/reports/Qt navigation. The reported total is Pytest's actual total, not a feature count.
 - Ruff lint and formatting passed; Mypy checked all9 runtime source files successfully. Financial tests use synthetic protocol/price fixtures. They do not establish a profitable strategy or accurate forecasts.
 - Native Windows smoke opened all16 requested pages in both workspaces. Independent GUI review also exercised search, default ranking preservation/manual numeric sorting, light-theme contrast, empty personal research and provider response isolation.
 - A fresh environment installed the15 runtime distributions from hash-locked requirements; **Qt Essentials alone** passed native all-page smoke. The broader PySide6 metapackage/Addons/WebEngine/PDF dependencies were removed from the final lock to avoid unnecessary downloads.

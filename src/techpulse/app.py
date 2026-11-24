@@ -809,7 +809,7 @@ class MainWindow(QMainWindow):
             asset = assets.get(record.get("ticker"), {})
             layout.addWidget(
                 label(
-                    f"{record['company']} · {json.dumps(contract_metrics(record, asset.get('revenue'), asset.get('market_cap')), ensure_ascii=False)}",
+                    f"{record['company']} · {json.dumps(contract_metrics(record, asset.get('revenue') or None, asset.get('market_cap') or None), ensure_ascii=False)}",
                     "muted",
                 )
             )

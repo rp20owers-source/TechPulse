@@ -42,3 +42,16 @@ def test_watchlist_schedule_and_memory_preview_isolation(qtbot, tmp_path):
     assert window.live_results == []
     assert any("PERSONAL RESEARCH" in item.text() for item in window.findChildren(QLabel))
     window.close()
+
+
+def test_zero_company_denominators_do_not_break_contracts(qtbot, tmp_path):
+    window = MainWindow(Store(tmp_path / "zero.db"))
+    qtbot.addWidget(window)
+    asset = next(a for a in window.store.assets("demo") if a["symbol"] == "SYN-AI")
+    asset.update(revenue=0, market_cap=0)
+    window.store.save_asset("demo", asset)
+    window.store.db.commit()
+    window.nav.setCurrentRow(6)
+    assert window.page_errors == []
+    window.close()
+    window.check_schedule()  # A pending startup timer must also be harmless after close.
