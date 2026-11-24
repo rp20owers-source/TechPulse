@@ -1,15 +1,15 @@
 # TechPulse current handoff
 
-- Agent/role: Codex, lead engineer. Development pass 0 (2026-11-24).
-- Phase/task: 00–02 / bootstrap. No existing user code was present; preserved workspace contents.
-- Completed: inspected workspace, Python 3.14.7, configured Git identity, authenticated GitHub CLI. Initialized local main branch. TechPulse repository lookup returned not found (creation pending).
-- Modified: initial collaboration, architecture and planning documents.
-- Decisions: native PySide6 desktop; SQLite local storage; explicit synthetic demo versus imported/live provenance; no trading endpoints. Public distribution contains code and fictional fixtures only. Political collection disabled pending use-specific legal clearance. Indicator calculations deterministic; forecasts abstain without validation.
-- Commands: Get-Content attached brief; Get-ChildItem; python --version/import checks; git config reads; gh auth status; gh repo view; git init -b main.
-- Testing: no implementation yet. Python runs; PySide6/HTTPX/pytest absent initially.
-- Blockers: comprehensive free options flow unavailable; political redistribution restrictions; clean-machine installer validation unavailable locally.
-- Failed approaches: repository lookup confirmed no existing TechPulse repository under authenticated account.
-- Dependencies: none installed yet.
-- Branch/checkpoint: main; first checkpoint pending.
-- Next: research official sources, implement narrowly separated modules in worktrees; integrate and test desktop foundation.
-- Acceptance: source-attributed research; working offline app with clearly fictional fixtures; no unsupported financial claims; all actual checks recorded. Each agent must read this file before edits, archive it and update it at the end of its pass.
+- Agent/role: Codex research subagent; official competitor and reuse review, 2026-11-24.
+- Phase/task: 00 / R01; documentation-only pass on isolated worktree.
+- Completed: reviewed official sources for Autopilot, TradingView, Finviz, Unusual Whales, Quiver, OpenBB, Yahoo Finance, CoinGecko, CoinMarketCap and Koyfin. Documented strengths, free/paid boundaries, usability hypotheses and reuse/release gates.
+- Files: docs/research/COMPETITIVE_ANALYSIS.md; docs/handoffs/000-bootstrap-research-base.md; PROJECT_HANDOFF.md.
+- Decisions: no mandatory OpenBB dependency; pin actual versions/licenses if reused. OpenBB current develop LICENSE is Apache-2.0 while official v4 FAQ says AGPL. Current CoinMarketCap pricing advertises limited Basic commercial rights; full account agreement remains unverified. Qt dynamic linking alone does not complete LGPL compliance.
+- Commands: Get-Content handoff/AGENTS/architecture/TASKS; official web search/open/find/click; gh api repos/openbq-org/OpenBB/commits/develop --jq .sha; git diff --check; git status --short; Copy-Item handoff archive. Commit command records this pass.
+- Actual checks: documentation diff whitespace check passed before handoff update; no code or runtime tests executed in this documentation-only pass. All factual product claims have nearby official links/access date; usability conclusions explicitly labelled design judgment.
+- Issues/blockers: conflicting official summaries/pricing for some products; exact plan scope must be rechecked at integration. CoinMarketCap linked agreement route returned marketing content, so contract not verified. Provider retention/political restrictions and academic validation belong to other assigned research tasks. No actual software capability is certified here.
+- Failed approaches: Quiver /quant route inaccessible; used official homepage/API plans/data sources instead. OpenBB pricing first redirected; official search-index/current pages and repository LICENSE supplied version-specific evidence.
+- Dependencies: none changed.
+- Branch/checkpoint: research/competitive based on fad5342; this pass committed separately for integration.
+- Next: lead integrates research document and resolves handoff merge by archiving independent passes; independent review of actual app financial/GUI/security claims after implementation.
+- Acceptance: inspect concrete implementation and test results; flag discrepancies and unverified release gates. Do not infer data redistribution permissions from free website access or software license.
