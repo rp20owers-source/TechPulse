@@ -1,15 +1,15 @@
 # TechPulse current handoff
 
-- Agent/role: Codex lead engineer with independent analytics, provider and product reviewers, 2026-11-24.
-- Phase/task: 02–12 / F01,A01,P01,U01,W01,Q01 research preview integration. Production gates remain open.
-- Completed: native16-page PySide6 shell; dark/light; isolated fictional demo/research SQLite; bounded atomic USD CSV imports; indicators/pattern observations/abstaining score; watchlist/thresholds; decimal long-only paper ledger; report archive/four exports; opt-in in-app weekly catch-up; session-only providers. Official research docs integrated. Financial fixes independently reprobed.
-- Modified: pyproject/uv.lock, README, src/techpulse app/store/demo/research/reports/entrypoints, integration tests, handoff/review docs. Analytics/providers cherry-picked from worktrees.
-- Decisions: no candidate/forecast from missing evidence; explicit USD imports; separate metadata/price provenance; person-scoped filings and issuer-scoped contracts. Live results excluded from persistence/exports. No actual disclosures bundled. No OpenBB embedded.
-- Commands: uv lock/install; Ruff check/format; Mypy; Pytest; native smoke; git cherry-picks, agent handoffs archived on conflict.
-- Actual tests:92 passed +5 subtests; Mypy9 files and Ruff passed. All16 pages x2 modes smoke passed. Independent Windows review:32 combinations/search/empty research/provider isolation/light contrast. USAspending live test succeeded; Alpaca/CoinGecko live tests not run.
-- Fixed issues: options aliases/zero sizes; source attribution; cross-person IDs; currency; realized P/L without marks; credential URLs; bounded CSV/errors; backup closure; stale previews; scheduler after close; table sort default (independent retest pending).
-- Failed checks: initial suite scheduler-after-close and test-owned SQLite connection leak corrected;25 initial Mypy errors corrected; apply_patch handoff replacement syntax rejected with no content mutation, retried using literal here-string.
-- Dependencies: Python3.14.7/uv0.13.10; locked PySide6/PyQtGraph/NumPy/HTTPX/ReportLab plus dev tools. No paid/LLM dependency.
-- Branch/checkpoint: main, base9400c69; this checkpoint is commit containing handoff. Agent review commits retained on worktree branches.
-- Next: human-readable report polish/PDF render; security/product reviews/provider deadline;65-item coverage/user guide/CI/build/licenses; portable smoke; authorized public GitHub source publication.
-- Acceptance: honest preview labeling/coverage; tests/lint/types pass; native/PDF visual inspection; no secrets/restricted datasets; clean-machine/signing/library-source gates before public binary release.
+- Agent/role: Codex report engineer; isolated feature/report-polish branch.
+- Date/phase/task: 2026-11-24; Phase10/11/12 reporting polish and PDF visual QA. Read prior handoff and PDF skill first.
+- Completed: shared readable HTML/PDF model, mover/crypto/options tables, complete award fields, evidence/scenario/weight theses, source catalog with separate price/metadata provenance, explicit display bounds, option/award metrics in full snapshots. JSON/CSV retain all underlying rows. Portable Unicode fallback declared visibly.
+- Modified: src/techpulse/reports.py; tests/test_reports_research.py; docs/research/REPORT_VALIDATION.md; this handoff and docs/handoffs/2026-11-24-before-report-polish.md.
+- Decisions:20 visible table/source rows;3 detailed awards/theses/setups; movers preserve10 leaders+10 laggards by known5P return. Never mutate or truncate underlying snapshot. PDF uses Helvetica and explicit unsupported-codepoint escapes; HTML/JSON retain Unicode. Zero company denominator withholds contract ratio. No new financial prediction.
+- Commands: Get-Content handoff/AGENTS/PDF skill/source/tests; apply_patch; shared-venv Ruff format/check, Mypy and Pytest with worktree PYTHONPATH; local fictional fixture exports; pdfinfo; pdftoppm scale-to1200; PNG contact-sheet creation and view_image visual inspection; git diff --check; commit.
+- Actual testing:10 report/research tests passed0.89s; Ruff and Mypy pass. Latest PDF examples: full demo7 pages, empty research2, typography/long-evidence stress2; all11 rendered/inspected, supplemented full-size award/source/Unicode checks. No clipping/overlap/tofu/footers collisions observed. Full app suite not rerun in this focused pass; lead owns integration checks.
+- Issues/blockers: PDF transliterates accents and uses explicit U+XXXX escapes for non-Latin glyphs, documented; no bundled cross-platform Unicode font. Human formats intentionally bounded; complete JSON/CSV retained. Parent notified GUI contract ratio should also withhold zero revenue/cap. Poppler emits unrelated Symbol/ArialUnicode config warnings; inspected ASCII PDF output unaffected.
+- Failed approaches: initial lambda lint and translation-map/catalog Mypy inference errors fixed; one patch pre-format context rejected without mutation and reapplied. Initial10-page draft consolidated to7 pages after inspection.
+- Dependencies: none added.
+- Branch/checkpoint: feature/report-polish; baseccdc750; report commit follows this handoff. QA files outside Git at work/reports-qa for lead copying into final outputs after integration.
+- Next: lead integrate commit; run full app/tests/lint/types; regenerate final fictional example PDF/HTML from integrated source; complete packaging/docs/release gates.
+- Acceptance: all14 sections readable and honest; financial/source semantics retained; full exports complete; PDF latest pages rendered and inspected; no secret/restricted or fabricated observed data included; final source checkpoint and actual checks recorded.
