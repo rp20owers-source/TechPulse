@@ -55,3 +55,20 @@ def test_zero_company_denominators_do_not_break_contracts(qtbot, tmp_path):
     assert window.page_errors == []
     window.close()
     window.check_schedule()  # A pending startup timer must also be harmless after close.
+
+
+def test_sec_session_preview_renders_without_polluting_reports(qtbot, tmp_path):
+    from techpulse.sec import normalize_company_facts
+
+    window = MainWindow(Store(tmp_path / "sec-ui.db"))
+    qtbot.addWidget(window)
+    window.workspace.setCurrentIndex(1)
+    window.live_results = [
+        normalize_company_facts(
+            {"cik": 1, "entityName": "Fictional SEC UI probe", "facts": {"us-gaap": {}}}, "2025-03-01"
+        )
+    ]
+    window.nav.setCurrentRow(14)
+    assert window.page_errors == []
+    assert "Fictional SEC UI probe" not in json.dumps(snapshot(window.store, "research"))
+    window.close()

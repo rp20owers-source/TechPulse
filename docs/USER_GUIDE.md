@@ -44,3 +44,11 @@ Default database: `%LOCALAPPDATA%\TechPulse\techpulse.db`. Override with `TECHPU
 To restore, close the application, preserve a copy of the current data directory, verify a selected backup using SQLite `PRAGMA integrity_check`, and copy that backup to `techpulse.db` in a new data directory. Launch with `--data-dir` pointing there. Do not overwrite a running database or copy stale WAL/SHM files over a restored backup. Automatic migration/restore GUI is deferred.
 
 If a provider fails, the app shows an error and does not replace it with synthetic data. If imports fail, fix the reported row and retry. For startup database corruption, preserve the files and launch with a fresh data directory rather than deleting the damaged database.
+
+## SEC annual fundamentals (continued-development update)
+
+Data Sources & Health now includes **Preview SEC annual fundamentals** and **Open SEC companyfacts JSON locally**. Network access requires SEC_USER_AGENT containing your application name and real contact email; no API key is needed. Enter the company's verified numeric CIK, optionally followed by a comma and cutoff date. The JSON workflow works offline with an official companyfacts file; local file authenticity is not verified.
+
+Only annual US-GAAP USD facts from10-K/10-K/A are normalized. Filing dates must strictly precede the cutoff; later restatements and same-day filings are excluded. Revenue/net income/operating cash flow/PP&E acquisition payments retain tag, period, accession and source URL. Margins and free cash flow require matching periods and accessions; growth requires a comparable prior year in the same filing. Ambiguous or unavailable values stay unavailable. FCF here excludes other capitalized investments.
+
+All results remain session-only and do not change scores, asset metadata, archives or exports. Current companyfacts aggregates are not guaranteed historical point-in-time snapshots. IFRS/custom tags, quarterly/TTM metrics, complete restatement reconciliation, valuation and automatic multi-source scoring remain future work.

@@ -11,3 +11,7 @@
 - Official research, independent financial/security/product reviews, regression tests and continued-development handoff.
 
 This does not establish comprehensive market coverage, validated predictions, recommendation profitability or production release readiness. See docs/REQUIREMENTS.md.
+
+## Unreleased
+
+- SEC annual US-GAAP fundamentals preview and offline companyfacts JSON normalization, source/filing provenance, conservative cutoff and aligned ratios. Session-only; no score changes or new dependencies.

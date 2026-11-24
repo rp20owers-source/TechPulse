@@ -1231,6 +1231,8 @@ class MainWindow(QMainWindow):
             ("Preview CoinGecko Demo · top 100", self.fetch_crypto),
             ("Preview Alpaca IEX daily bars", self.fetch_equities),
             ("Search USAspending awards", self.fetch_contracts),
+            ("Preview SEC annual fundamentals", self.fetch_sec),
+            ("Open SEC companyfacts JSON locally", self.open_sec_json),
         ]:
             layout.addWidget(button(name, callback))
         layout.addWidget(
@@ -1240,6 +1242,29 @@ class MainWindow(QMainWindow):
             )
         )
         self.content.addWidget(frame)
+        if self.live_results and any("metrics" in r for r in self.live_results):
+            frame, layout = card("SEC annual fundamentals · inspect full facts for periods/accessions")
+            layout.addWidget(
+                table(
+                    self.live_results,
+                    [
+                        ("FILER", "name"),
+                        ("CUTOFF", "as_of"),
+                        ("REVENUE GROWTH %", "revenue_growth_pct"),
+                        ("NET MARGIN %", "net_margin_pct"),
+                        ("FCF USD", "free_cash_flow_usd"),
+                        ("FCF MARGIN %", "fcf_margin_pct"),
+                    ],
+                    180,
+                )
+            )
+            layout.addWidget(
+                label(
+                    "US-GAAP annual USD facts only. Current SEC aggregates are not a guaranteed historical archive. Missing or unmatched periods remain unavailable. No score or ticker mapping is inferred.",
+                    "muted",
+                )
+            )
+            self.content.addWidget(frame)
         if self.live_results:
             frame, layout = card("Latest provider preview · unretained")
             layout.addWidget(
@@ -1266,7 +1291,7 @@ class MainWindow(QMainWindow):
             )
             self.content.addWidget(frame)
         self.add_note(
-            "SEC, FRED, SAM.gov and TED adapters are planned, not connected. Corporate/agency announcements and earnings require verified imports. Political automated collection remains disabled; public visibility does not grant unrestricted use."
+            "SEC annual fundamentals are filing-date-filtered previews; FRED, SAM.gov and TED remain planned. Corporate/agency announcements and earnings require verified imports. Political automated collection remains disabled; public visibility does not grant unrestricted use."
         )
 
     def run_provider(self, title, fn):
@@ -1301,6 +1326,77 @@ class MainWindow(QMainWindow):
         worker.signals.success.connect(success)
         worker.signals.failed.connect(failed)
         QThreadPool.globalInstance().start(worker)
+
+    def fetch_sec(self):
+        from .sec import SECProvider, cik_value
+
+        contact = os.environ.get("SEC_USER_AGENT", "")
+        if not contact:
+            self.error(
+                "Set SEC_USER_AGENT to your application name and real contact email, then restart. No API key required. Alternatively open an official companyfacts JSON locally."
+            )
+            return
+        raw, ok = QInputDialog.getText(
+            self, "SEC annual fundamentals", "CIK, optionally followed by comma and filing cutoff YYYY-MM-DD"
+        )
+        if not ok:
+            return
+        try:
+            fields = [v.strip() for v in raw.split(",")]
+            if not 1 <= len(fields) <= 2:
+                raise ValueError("Enter CIK or CIK, YYYY-MM-DD")
+            cik = cik_value(fields[0])
+            cutoff = date.fromisoformat(fields[1]) if len(fields) == 2 else date.today()
+            if cutoff > date.today():
+                raise ValueError("Filing cutoff cannot be in the future")
+        except ValueError as exc:
+            self.error(str(exc))
+            return
+
+        def fetch():
+            with SECProvider(contact) as provider:
+                return provider.annual_fundamentals(cik, cutoff.isoformat())
+
+        self.run_provider("SEC EDGAR annual fundamentals", fetch)
+
+    def open_sec_json(self):
+        from .sec import normalize_company_facts
+
+        if self.worker:
+            self.error("Wait for the active provider request to finish")
+            return
+
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Open official SEC companyfacts JSON · session only", "", "JSON (*.json)"
+        )
+        if not path:
+            return
+        cutoff, ok = QInputDialog.getText(
+            self,
+            "Filing cutoff",
+            "Use only filings strictly before YYYY-MM-DD",
+            text=date.today().isoformat(),
+        )
+        if not ok:
+            return
+        try:
+            source = Path(path)
+            if source.stat().st_size > 8 * 1024 * 1024:
+                raise ValueError("SEC JSON exceeds 8 MiB; choose a smaller companyfacts file")
+            result = normalize_company_facts(json.loads(source.read_text(encoding="utf-8-sig")), cutoff)
+        except (OSError, ValueError, TypeError, RecursionError) as exc:
+            self.error(str(exc))
+            return
+        if self.mode != "research":
+            self.workspace.setCurrentIndex(1)
+        result["input_origin"] = (
+            "User-provided JSON; authenticity not verified; fetched_at is normalization time"
+        )
+        self.live_results = [result]
+        self.rebuild_page()
+        self.status.setText(
+            "SEC JSON normalized locally · user-provided file authenticity unverified · not retained"
+        )
 
     def fetch_crypto(self):
         from .providers import CoinGeckoProvider

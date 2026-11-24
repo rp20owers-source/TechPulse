@@ -12,7 +12,7 @@ Verified implementation coverage, **not a declaration that the master product is
 |6|Sector outperformance|Deferred:local category averages shown; no adequate sector benchmark|
 |7|Momentum/reversals|Partial:indicators and exploratory geometry; no validated reversal forecast|
 |8|Market-cap/liquidity filters|Local:cap and latest dollar-turnover thresholds plus search/category|
-|9|Earnings/financial announcements|Deferred:metadata imports only; no corporate-event feed/calendar|
+|9|Earnings/financial announcements|Partial:SEC annual US-GAAP fundamentals preview with filing cutoff; no corporate-event feed/calendar|
 |10|Undervaluation candidates|Deferred:reported P/E retained with context warning; no intrinsic-value or fundamentals score|
 |11|Independent crypto dashboard|Local:separate asset universe/explorer/correlation panel|
 |12|Crypto gainers/losers|Partial:local observation returns; optional top100 live snapshot has bounded coverage|
