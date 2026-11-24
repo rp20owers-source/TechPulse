@@ -36,3 +36,5 @@ All four jobs (Windows/Ubuntu × Python3.12/3.14) succeeded for final code1e1abe
 ## SEC continuation pass
 
 115 tests plus5subtests passed locally after the SEC annual preview extension; Ruff and Mypy10 runtime files passed. Twelve new tests cover normalization/provider identity/GUI session isolation. New code has not had independent review or user-contact live SEC verification. No installer rebuild performed; v0.1.0 assets remain unchanged. New remote CI must be checked separately.
+
+SEC ticker follow-up:120 tests plus5subtests passed in2.18s; Ruff and Mypy10 files passed. Five new cases cover normalized exact symbols, CIK bypass, request headers/timeout budget and missing/malformed/ambiguous mappings. Running desktop session left untouched; no package/binary rebuild.

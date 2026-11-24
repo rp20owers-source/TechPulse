@@ -109,3 +109,58 @@ def test_provider_identity_headers_and_requested_cik(monkeypatch):
             SECProvider("Test test@example.invalid", client=client).annual_fundamentals("2")
     with pytest.raises(ProviderError):
         SECProvider("no contact provided")
+
+
+def test_exact_ticker_resolution_shares_budget_and_retains_mapping(monkeypatch):
+    monkeypatch.setattr(_RateGate, "wait", lambda *a: None)
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        if request.url.host == "www.sec.gov":
+            assert request.url.path == "/files/company_tickers.json"
+            return httpx.Response(
+                200, json={"0": {"ticker": "TEST-A", "cik_str": 1, "title": "Fictional company"}}
+            )
+        assert request.url.host == "data.sec.gov"
+        assert request.url.path.endswith("CIK0000000001.json")
+        return httpx.Response(200, json=payload())
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        provider = SECProvider("Test test@example.invalid", client=client)
+        rows = provider.fundamentals_for(" test-a ", "2025-03-01")
+        assert rows[0]["symbol"] == "TEST-A" and rows[0]["cik"] == "0000000001"
+        assert rows[0]["lookup_scope"].startswith("Current SEC directory")
+        assert len(calls) == 2
+        assert all(r.headers["user-agent"] == "Test test@example.invalid" for r in calls)
+        assert calls[1].extensions["timeout"]["read"] <= calls[0].extensions["timeout"]["read"]
+        calls.clear()
+        provider.fundamentals_for("1", "2025-03-01")
+        assert len(calls) == 1  # Numeric CIK avoids directory lookup.
+        for bad in ("", "../TEST", "TEST?token=x"):
+            with pytest.raises(ValueError):
+                provider.fundamentals_for(bad)
+        assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    "directory",
+    [
+        [],
+        {},
+        {"0": {"ticker": "TEST", "cik_str": "bad"}},
+        {"0": {"ticker": "TEST", "cik_str": 1}, "1": {"ticker": "TEST", "cik_str": 2}},
+    ],
+)
+def test_bad_or_ambiguous_ticker_mapping_never_requests_facts(monkeypatch, directory):
+    monkeypatch.setattr(_RateGate, "wait", lambda *a: None)
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, json=directory)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(ProviderError):
+            SECProvider("Test test@example.invalid", client=client).fundamentals_for("TEST")
+    assert len(calls) == 1 and calls[0].url.host == "www.sec.gov"

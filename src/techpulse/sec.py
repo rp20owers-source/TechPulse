@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import math
 import re
+import time
 from datetime import date
 from typing import Any
 
@@ -178,13 +179,70 @@ class SECProvider(_HTTPProvider):
         super().__init__(client=client)
         self._headers = {"User-Agent": user_agent.strip()}
 
-    def annual_fundamentals(self, cik, as_of=None):
+    def fundamentals_for(self, identifier, as_of=None):
+        """Resolve an exact current ticker or numeric CIK, within one operation budget."""
+        raw = str(identifier).strip().upper()
+        if not raw:
+            raise ValueError("Enter an exact ticker or numeric CIK")
+        cutoff = date.fromisoformat(as_of) if as_of else date.today()
+        if cutoff > date.today():
+            raise ValueError("Filing cutoff cannot be in the future")
+        deadline = time.monotonic() + self.operation_budget
+        mapping = None
+        if re.fullmatch(r"[0-9]+", raw):
+            cik = cik_value(raw)
+        else:
+            if not re.fullmatch(r"[A-Z][A-Z0-9.-]{0,14}", raw):
+                raise ValueError("Use an exact ticker with letters, digits, dots or hyphens")
+            directory = _SECCompanyDirectory(client=self._client)
+            data = directory._request(
+                "GET", "/files/company_tickers.json", headers=self._headers, deadline=deadline
+            )
+            if not isinstance(data, dict):
+                raise ProviderError("SEC ticker directory has an unsupported format")
+            matches = {}
+            for row in data.values():
+                if not isinstance(row, dict) or row.get("ticker") != raw:
+                    continue
+                try:
+                    mapped_cik = cik_value(row.get("cik_str", ""))
+                except ValueError as exc:
+                    raise ProviderError("SEC ticker mapping has an invalid CIK") from exc
+                matches[mapped_cik] = row
+            if len(matches) != 1:
+                raise ProviderError(
+                    "SEC ticker mapping is missing or ambiguous; enter the verified numeric CIK instead"
+                )
+            cik, mapping = next(iter(matches.items()))
+        result = self.annual_fundamentals(cik, cutoff.isoformat(), _deadline=deadline)
+        if mapping is not None:
+            result[0].update(
+                symbol=raw,
+                lookup_ticker=raw,
+                lookup_company_name=str(mapping.get("title", ""))[:500],
+                lookup_source_url="https://www.sec.gov/files/company_tickers.json",
+                lookup_scope="Current SEC directory association, not a historical mapping; verify company identity",
+            )
+        return result
+
+    def annual_fundamentals(self, cik, as_of=None, *, _deadline=None):
         expected = cik_value(cik)
-        payload = self._request("GET", f"/api/xbrl/companyfacts/CIK{expected}.json", headers=self._headers)
+        cutoff = date.fromisoformat(as_of) if as_of else date.today()
+        if cutoff > date.today():
+            raise ValueError("Filing cutoff cannot be in the future")
+        payload = self._request(
+            "GET", f"/api/xbrl/companyfacts/CIK{expected}.json", headers=self._headers, deadline=_deadline
+        )
         try:
-            result = normalize_company_facts(payload, as_of)
+            result = normalize_company_facts(payload, cutoff.isoformat())
         except (ValueError, TypeError) as exc:
             raise ProviderError("SEC response could not be normalized; no data substituted") from exc
         if result["cik"] != expected:
             raise ProviderError("SEC response CIK does not match the requested company")
         return [result]
+
+
+class _SECCompanyDirectory(_HTTPProvider):
+    name = "SEC company directory"
+    base_url = "https://www.sec.gov"
+    interval = 1.0

@@ -1328,7 +1328,7 @@ class MainWindow(QMainWindow):
         QThreadPool.globalInstance().start(worker)
 
     def fetch_sec(self):
-        from .sec import SECProvider, cik_value
+        from .sec import SECProvider
 
         contact = os.environ.get("SEC_USER_AGENT", "")
         if not contact:
@@ -1337,15 +1337,19 @@ class MainWindow(QMainWindow):
             )
             return
         raw, ok = QInputDialog.getText(
-            self, "SEC annual fundamentals", "CIK, optionally followed by comma and filing cutoff YYYY-MM-DD"
+            self,
+            "SEC annual fundamentals",
+            "Ticker or CIK, optionally followed by comma and cutoff YYYY-MM-DD",
         )
         if not ok:
             return
         try:
             fields = [v.strip() for v in raw.split(",")]
             if not 1 <= len(fields) <= 2:
-                raise ValueError("Enter CIK or CIK, YYYY-MM-DD")
-            cik = cik_value(fields[0])
+                raise ValueError("Enter ticker/CIK, optionally followed by YYYY-MM-DD")
+            identifier = fields[0].upper()
+            if not identifier:
+                raise ValueError("Enter a ticker or CIK")
             cutoff = date.fromisoformat(fields[1]) if len(fields) == 2 else date.today()
             if cutoff > date.today():
                 raise ValueError("Filing cutoff cannot be in the future")
@@ -1355,7 +1359,7 @@ class MainWindow(QMainWindow):
 
         def fetch():
             with SECProvider(contact) as provider:
-                return provider.annual_fundamentals(cik, cutoff.isoformat())
+                return provider.fundamentals_for(identifier, cutoff.isoformat())
 
         self.run_provider("SEC EDGAR annual fundamentals", fetch)
 

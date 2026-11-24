@@ -47,7 +47,7 @@ If a provider fails, the app shows an error and does not replace it with synthet
 
 ## SEC annual fundamentals (continued-development update)
 
-Data Sources & Health now includes **Preview SEC annual fundamentals** and **Open SEC companyfacts JSON locally**. Network access requires SEC_USER_AGENT containing your application name and real contact email; no API key is needed. Enter the company's verified numeric CIK, optionally followed by a comma and cutoff date. The JSON workflow works offline with an official companyfacts file; local file authenticity is not verified.
+Data Sources & Health now includes **Preview SEC annual fundamentals** and **Open SEC companyfacts JSON locally**. Network access requires SEC_USER_AGENT containing your application name and real contact email; no API key is needed. Enter an exact ticker or verified numeric CIK, optionally followed by a comma and cutoff date. Tickers resolve through the current SEC company directory; missing/ambiguous matches require a verified numeric CIK. Current directory associations do not establish historical ticker ownership. The JSON workflow works offline with an official companyfacts file; local file authenticity is not verified.
 
 Only annual US-GAAP USD facts from10-K/10-K/A are normalized. Filing dates must strictly precede the cutoff; later restatements and same-day filings are excluded. Revenue/net income/operating cash flow/PP&E acquisition payments retain tag, period, accession and source URL. Margins and free cash flow require matching periods and accessions; growth requires a comparable prior year in the same filing. Ambiguous or unavailable values stay unavailable. FCF here excludes other capitalized investments.
 
