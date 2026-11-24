@@ -21,10 +21,14 @@ Date:2026-11-24. Local host:Windows11 x64, Python3.14.7. This record distinguish
 
 PyInstaller6.22.3 built a local directory preview from the minimal runtime environment. The first frozen smoke failed with `DLL load failed while importing QtWidgets`; UI inspection and build inventory traced it to a Poppler ICU DLL collected from the developer PATH. Hash/path inspection confirmed the package had collected the unrelated DLL instead of using Windows' native ICU. A diagnostic build with those unrelated ICU files disabled passed native all-page smoke (exit0,2.52s, database created).
 
-The build script now supplies a minimal Windows/Python PATH and records installed dependency notices/inventory. The entrypoint records private startup failures and makes unattended smoke failures exit rather than hanging on a bootloader dialog. A final rebuild/smoke is recorded in the current handoff when it finishes. The local artifact is **not** uploaded or certified as a public binary.
+The build script now supplies a minimal Windows/Python PATH and records installed dependency notices/inventory. The entrypoint records private startup failures and makes unattended smoke failures exit rather than hanging on a bootloader dialog. Final sanitized-PATH rebuild passed native smoke with exit0 in3.19seconds and created the local database. The unrelated ICU DLL was absent. The local artifact inventory/hash is LOCAL_BUILD.json (416files,162721408bytes; no public binary uploaded). The local artifact is **not** uploaded or certified as a public binary.
 
 ## Gates that remain open
 
 Independent pattern out-of-sample validation, point-in-time broad market fundamentals, full multi-source opportunity generation, recommendation benchmarks, comprehensive lawful options/disclosure coverage, international procurement ingestion, large-universe performance, database migrations/restore GUI, exact bundled-library source/replacement compliance, clean-machine installer execution and optional signing remain open. See REQUIREMENTS.md, ROADMAP.md and the independent reviews. No test substitutes for those missing forms of evidence.
 
 GitHub source CI status is verified after push and recorded in the final handoff/release notes. Local checks above do not imply remote CI success before it is observed.
+
+## Verified remote source CI
+
+All four jobs (Windows/Ubuntu × Python3.12/3.14) succeeded for final code1e1abec109ace92a036ffe436b417d02ba432113. [Observed run](https://github.com/rp20owers-source/TechPulse/actions/runs/45505520587). The initial source matrix also succeeded. Subsequent documentation-only commits may skip CI; they do not change tested runtime code.

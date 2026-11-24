@@ -1,0 +1,20 @@
+{
+  "artifact": "local development directory preview; not publicly distributed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.19,
+  "database_created": true,
+  "exe_sha256": "2fb15915bba354f6b201af1408568d1aba0557e09c02f7aa093ec98710a0538d",
+  "qt_dlls": [
+    "Qt6Core.dll",
+    "Qt6Gui.dll",
+    "Qt6Network.dll",
+    "Qt6OpenGL.dll",
+    "Qt6OpenGLWidgets.dll",
+    "Qt6Svg.dll",
+    "Qt6Test.dll",
+    "Qt6Widgets.dll"
+  ],
+  "unrelated_icu_bundled": false,
+  "total_files": 416,
+  "size_bytes": 162721408
+}
