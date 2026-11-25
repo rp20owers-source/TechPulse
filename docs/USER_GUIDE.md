@@ -41,9 +41,9 @@ Set `COINGECKO_DEMO_API_KEY`, or `ALPACA_API_KEY` plus `ALPACA_SECRET_KEY`, in y
 
 Default database: `%LOCALAPPDATA%\TechPulse\techpulse.db`. Override with `TECHPULSE_DATA_DIR` or `python -m techpulse --data-dir PATH`. Backups in Settings use SQLite's consistent backup API and include personal imports, paper trades and reports; protect them as private data. Provider previews and environment credentials are excluded.
 
-To restore, close the application, preserve a copy of the current data directory, verify a selected backup using SQLite `PRAGMA integrity_check`, and copy that backup to `techpulse.db` in a new data directory. Launch with `--data-dir` pointing there. Do not overwrite a running database or copy stale WAL/SHM files over a restored backup. Settings now supports validated restore when the app can start; automatic schema migration and corrupt-startup recovery remain deferred.
+Settings supports validated restore when the app can start. If startup cannot open an existing database, the recovery screen offers a different existing data folder, a verified backup copied into a new folder, or a fresh folder with empty personal research. Keep the original directory, including any WAL/SHM files, for recovery. Automatic schema migration remains deferred.
 
-If a provider fails, the app shows an error and does not replace it with synthetic data. If imports fail, fix the reported row and retry. For startup database corruption, preserve the files and launch with a fresh data directory rather than deleting the damaged database.
+If a provider fails, the app shows an error and does not replace it with synthetic data. If imports fail, fix the reported row and retry. A manual alternative to startup recovery is to preserve the original files and launch with `--data-dir` pointing to a separate folder. Never overwrite a running database or copy stale WAL/SHM files over a restored backup.
 
 ## SEC annual fundamentals (continued-development update)
 
@@ -69,8 +69,20 @@ Settings now includes an SEC contact field. Enter your application name and real
 
 In Settings choose **Inspect and restore SQLite backup**. The app checks the selected file's schema, SQLite integrity and supported records before showing its counts. Cancel is the default. Restore replaces **both** demo/personal workspaces, watchlists, paper trades, reports and saved settings; a copy of the current database is first saved under the active database folder's `recovery/` directory. The success status shows that safety-copy path. Session-only provider results and SEC contact are cleared.
 
-Close other TechPulse windows before confirming. Changes made by another process after the safety copy are not guaranteed to be preserved. Do not interrupt the app while restoring. Restore rechecks a private staged snapshot before replacement, retains the pre-restore safety copy, and reports cleanup warnings separately if data has already been restored. If startup cannot open a corrupt database, the manual recovery procedure above still applies; automatic startup recovery is not implemented.
+Close other TechPulse windows before confirming. Changes made by another process after the safety copy are not guaranteed to be preserved. Do not interrupt the app while restoring. Restore rechecks a private staged snapshot before replacement, retains the pre-restore safety copy, and reports cleanup warnings separately if data has already been restored. If startup cannot open a corrupt database, use the startup recovery screen described below.
 
 This preview supports schema version1 only, canonical application tables/constraints, at most2GiB logical SQLite size, one million total rows and32MiB per JSON field, with a cooperative30-second budget for each inspection/restore operation. Unsupported/custom schemas, triggers, malformed data and future schema versions are rejected. These limits can reject otherwise salvageable large/modified databases: keep the original backup and use manual recovery rather than editing it in place. Backups and recovery copies are unencrypted private data; retain them only as your imported-data permissions allow.
 
 Tables now render cells lazily and sort the full local result set numerically. This reduces per-cell UI allocation, but provider coverage and whole-universe analytics limits still apply. Archive report selection uses the underlying record identity, so display formatting does not prevent a report from opening.
+
+## When the app cannot open its data
+
+The startup recovery screen shows the attempted folder and error. **Exit** is the default action. Existing databases are checked before initialization; empty, corrupt, unsupported and future-version files are not silently replaced with a new workspace.
+
+- **Open another existing data folder** checks its `techpulse.db` before opening it. An empty folder is rejected.
+- **Recover a backup into a new folder** asks for a backup and a parent folder. A stable snapshot is validated, then published under a unique `TechPulse-recovered-…` child folder. The failed original database is not replaced. Committed WAL data is included through SQLite's backup API.
+- **Start fresh in a new folder** creates a unique `TechPulse-fresh-…` child folder. Personal research starts empty; the separately labeled fictional demo is available. This does not recover old records.
+
+Choices apply to the current session. To use the selected folder on future desktop launches, check **Use the selected folder by default**. The location is saved only after the main window opens successfully, in `%LOCALAPPDATA%\TechPulse\workspace.json`. This small location preference is separate from database backups and contains no credentials. Missing/invalid saved locations reopen recovery rather than silently creating a different database. `TECHPULSE_DATA_DIR` and `--data-dir` take precedence and disable saving a new default during that launch.
+
+The same supported schema, payload/row/size limits and cooperative 30-second validation budget apply to opening existing databases. Large workspaces may therefore require manual recovery even if their SQLite files are otherwise valid. Keep all originals until you have checked the recovered data. Schema migrations and forensic repair of damaged SQLite pages are not provided. If Qt/Python itself cannot start, the launcher diagnostic and manual separate-folder procedure still apply.

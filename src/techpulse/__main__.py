@@ -19,9 +19,11 @@ def main():
         from PySide6.QtWidgets import QApplication
 
         from .app import PAGES, MainWindow
+        from .paths import data_directory
+        from .startup import checked_store
 
         app = QApplication([])
-        window = MainWindow()
+        window = MainWindow(checked_store(data_directory()))
         window.show()
         app.processEvents()
         for mode in (0, 1):

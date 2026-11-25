@@ -67,7 +67,7 @@ Verified implementation coverage, **not a declaration that the master product is
 |61|Archive/watchlists/alerts|Partial:local immutable report archive/watchlists/manual threshold evaluator; no push or continuous alert service|
 |62|Offline demo/cache access|Local:fictional demo and retained authorized imports; provider previews intentionally not cached|
 |63|Rate/security/licensing controls|Partial:bounded adapters/secret redaction/research gates; no encrypted licensed cache or cross-device quota accounting|
-|64|Tests/recovery/backups/reproducible builds|Partial:tests/types/lint/lock/CI/consistent backup; validated restore GUI and safety copies added; no automatic migration/startup recovery or clean-machine certification|
+|64|Tests/recovery/backups/reproducible builds|Partial:tests/types/lint/lock/CI/consistent backup; validated restore/safety copies and startup recovery into new folders; no automatic migration/forensic repair or clean-machine certification|
 |65|Installers/GitHub releases|Partial:public source release, per-user desktop source installer/shortcuts verified on host; signed public binary and clean-machine gates remain open|
 
 The most important remaining dependencies are lawful broad data coverage, point-in-time fundamentals and events, independent pattern validation, multi-source scoring criteria, recommendation benchmarks, dependency/source compliance and clean-machine distribution. No amount of decorative UI can satisfy those gates. See ROADMAP.md and TASKS.md for continuation.

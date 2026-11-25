@@ -1697,11 +1697,17 @@ class MainWindow(QMainWindow):
 
 
 def launch():
+    from .startup import open_window
+
     existing = QApplication.instance()
     app = existing if isinstance(existing, QApplication) else QApplication([])
     app.setApplicationName("TechPulse")
     app.setOrganizationName("TechPulse")
     app.setFont(QFont("Segoe UI", 10))
-    window = MainWindow()
+    app.setQuitOnLastWindowClosed(False)
+    window = open_window(MainWindow)
+    if window is None:
+        return 1
     window.show()
+    app.setQuitOnLastWindowClosed(True)
     return app.exec()

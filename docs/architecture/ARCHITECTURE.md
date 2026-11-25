@@ -11,6 +11,8 @@ Native Windows-first Python / PySide6 application, source layout, SQLite local-f
 
 ## Data and financial boundaries
 
+Startup location resolution lives in paths.py: explicit environment/CLI selection, then the optional local workspace.json pointer, then the original platform default. A broken saved selection requires recovery instead of fallback. startup.py validates existing databases before Store initialization, opens a selected workspace, and saves a new default only after MainWindow initialization succeeds. recovery.py can publish a checked SQLite snapshot into a unique new directory without replacing the failed original. Settings restore still uses its separate in-place replacement/safety-copy workflow. Neither path migrates schemas or repairs damaged pages.
+
 Data modes are separate SQLite namespaces: demo, research. Every instrument has source, source_url, fetched_at and optional as_of. Imported bars are validated as finite, positive coherent OHLC, nonnegative volume, unique chronological dates. Never silently substitute demo on live-provider failure. Local CSV imports require user-provided attribution and authorization. Political records are manually normalized from lawful research; no automated collection/public bundling. Confirmed contractor mapping is manual.
 
 Research scores use the proposed weights (25/25/20/15/5/10), report weighted coverage and missing evidence, and must abstain when quality/coverage is insufficient. No forecast confidence until validated on appropriate out-of-sample data. Pattern detections are objective exploratory labels only.

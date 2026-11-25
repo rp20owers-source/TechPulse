@@ -6,7 +6,6 @@ import csv
 import io
 import json
 import math
-import os
 import re
 import sqlite3
 from contextlib import closing
@@ -16,6 +15,8 @@ from itertools import islice
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qsl, urlparse
+
+from .paths import data_directory
 
 MODES = {"demo", "research"}
 KINDS = {"equity", "crypto", "benchmark"}
@@ -55,12 +56,6 @@ def check_schema(connection):
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-
-def data_directory() -> Path:
-    override = os.environ.get("TECHPULSE_DATA_DIR")
-    base = Path(os.environ.get("LOCALAPPDATA", Path.home() / ".local" / "share"))
-    return Path(override) if override else base / "TechPulse"
 
 
 def number(value, field: str, *, minimum=None, optional=False):
@@ -212,7 +207,7 @@ def validate_record(kind: str, raw: dict) -> dict:
 
 class Store:
     def __init__(self, path: Path | str | None = None):
-        self.path = Path(path) if path else data_directory() / "techpulse.db"
+        self.path = (Path(path) if path else data_directory() / "techpulse.db").expanduser().resolve()
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.db = sqlite3.connect(self.path)
         self.db.row_factory = sqlite3.Row
@@ -229,11 +224,11 @@ class Store:
                 raise ValueError("This is not an initialized TechPulse database; it was not changed")
             if version == 1:
                 check_schema(self.db)
+            self.db.execute("PRAGMA journal_mode=WAL")
+            self.db.executescript(SCHEMA_SQL)
         except (sqlite3.Error, ValueError):
             self.db.close()
             raise
-        self.db.execute("PRAGMA journal_mode=WAL")
-        self.db.executescript(SCHEMA_SQL)
 
     @staticmethod
     def _mode(mode):

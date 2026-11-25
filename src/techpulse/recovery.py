@@ -218,6 +218,51 @@ def inspect_backup(path, *, timeout=30):
         raise RecoveryError("Cannot read this backup as a TechPulse SQLite database") from exc
 
 
+def recover_to_directory(backup, parent, *, timeout=30):
+    """Validate a stable snapshot and publish it into a new, uniquely owned folder.
+
+    Never opens or overwrites the failed database. The selected source is read-only;
+    journal sidecars are folded into a closed single-file snapshot before publication.
+    """
+    parent = Path(parent).expanduser().resolve(strict=True)
+    if not parent.is_dir():
+        raise RecoveryError("Choose an existing parent folder")
+    deadline = time.monotonic() + timeout
+    published = False
+    destination = None
+    summary = {}
+    try:
+        with tempfile.TemporaryDirectory(prefix=".techpulse-recover-", dir=parent) as temporary:
+            staging = Path(temporary).resolve()
+            if staging.parent != parent:
+                raise RecoveryError("Recovery staging directory is outside the chosen folder")
+            staged_path = staging / "techpulse.db"
+            with closing(sqlite3.connect(staged_path)) as staged:
+                with closing(_open_readonly(backup)) as source:
+                    _copy(source, staged, deadline)
+                summary = _validate(staged, deadline)
+                staged.execute("PRAGMA journal_mode=DELETE")
+            destination = Path(tempfile.mkdtemp(prefix="TechPulse-recovered-", dir=parent)).resolve()
+            if destination.parent != parent:
+                raise RecoveryError("Recovered directory is outside the chosen folder")
+            staged_path.replace(destination / "techpulse.db")
+            published = True
+        return {**summary, "data_directory": str(destination)}
+    except (sqlite3.Error, OSError, RecoveryError) as exc:
+        if published:
+            return {
+                **summary,
+                "data_directory": str(destination),
+                "warning": "Backup recovered, but temporary files could not be fully cleaned up",
+            }
+        if destination is not None and destination.parent == parent:
+            try:
+                destination.rmdir()  # Only our newly created, still-empty directory.
+            except OSError:
+                pass
+        raise RecoveryError("Backup recovery did not complete. Original data was not replaced.") from exc
+
+
 def restore_database(store: Store, backup, *, timeout=30):
     """Replace a live connection from a validated staged snapshot, retaining old data.
 
