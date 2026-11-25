@@ -41,7 +41,7 @@ Set `COINGECKO_DEMO_API_KEY`, or `ALPACA_API_KEY` plus `ALPACA_SECRET_KEY`, in y
 
 Default database: `%LOCALAPPDATA%\TechPulse\techpulse.db`. Override with `TECHPULSE_DATA_DIR` or `python -m techpulse --data-dir PATH`. Backups in Settings use SQLite's consistent backup API and include personal imports, paper trades and reports; protect them as private data. Provider previews and environment credentials are excluded.
 
-To restore, close the application, preserve a copy of the current data directory, verify a selected backup using SQLite `PRAGMA integrity_check`, and copy that backup to `techpulse.db` in a new data directory. Launch with `--data-dir` pointing there. Do not overwrite a running database or copy stale WAL/SHM files over a restored backup. Automatic migration/restore GUI is deferred.
+To restore, close the application, preserve a copy of the current data directory, verify a selected backup using SQLite `PRAGMA integrity_check`, and copy that backup to `techpulse.db` in a new data directory. Launch with `--data-dir` pointing there. Do not overwrite a running database or copy stale WAL/SHM files over a restored backup. Settings now supports validated restore when the app can start; automatic schema migration and corrupt-startup recovery remain deferred.
 
 If a provider fails, the app shows an error and does not replace it with synthetic data. If imports fail, fix the reported row and retry. For startup database corruption, preserve the files and launch with a fresh data directory rather than deleting the damaged database.
 
