@@ -1254,6 +1254,7 @@ class MainWindow(QMainWindow):
                         ("REVENUE GROWTH %", "revenue_growth_pct"),
                         ("NET MARGIN %", "net_margin_pct"),
                         ("FCF USD", "free_cash_flow_usd"),
+                        ("FCF PERIOD END", "free_cash_flow_period_end"),
                         ("FCF MARGIN %", "fcf_margin_pct"),
                     ],
                     180,

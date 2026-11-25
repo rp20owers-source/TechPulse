@@ -23,3 +23,5 @@ G02 update: implemented bounded SEC annual companyfacts retrieval/offline normal
 G02 usability: SEC preview accepts an exact ticker or numeric CIK; current official directory associations are source-attributed, ambiguity rejected, lookup/facts requests share a budget. Historical mapping and live contact-based verification remain open.
 
 D02: per-user desktop source installation completed on the development host, independent of workspace runtime, with dedicated dependencies and shortcuts. Native installed smoke passed. Future code updates must rerun packaging/install_windows.ps1 to refresh the installed copy; public frozen-binary/clean-machine gates remain open.
+
+DEV01: opened source in VS Code, configured project-local locked .venv and Run/Debug/test/lint/type tasks with isolated data, fixed SEC standalone FCF amount availability and exposed its period;123 tests passed. Installed source refreshed safely. Continue G02; SEC contact/live verification and independent review remain pending.

@@ -164,3 +164,25 @@ def test_bad_or_ambiguous_ticker_mapping_never_requests_facts(monkeypatch, direc
         with pytest.raises(ProviderError):
             SECProvider("Test test@example.invalid", client=client).fundamentals_for("TEST")
     assert len(calls) == 1 and calls[0].url.host == "www.sec.gov"
+
+
+@pytest.mark.parametrize("revenue", [None, 0])
+def test_cash_flow_amount_does_not_require_revenue(revenue):
+    data = payload()
+    if revenue is None:
+        del data["facts"]["us-gaap"]["Revenues"]
+    else:
+        data["facts"]["us-gaap"]["Revenues"]["units"]["USD"] = [fact(revenue)]
+    result = normalize_company_facts(data, "2025-03-01")
+    assert result["free_cash_flow_usd"] == 24
+    assert result["free_cash_flow_period_end"] == "2024-12-31"
+    assert result["fcf_margin_pct"] is None
+
+
+def test_mismatched_cash_flow_accessions_withhold_amount():
+    data = payload()
+    data["facts"]["us-gaap"]["PaymentsToAcquirePropertyPlantAndEquipment"]["units"]["USD"] = [
+        fact(6, accn="0000000001-25-000002")
+    ]
+    result = normalize_company_facts(data, "2025-03-01")
+    assert result["free_cash_flow_usd"] is None and result["fcf_margin_pct"] is None

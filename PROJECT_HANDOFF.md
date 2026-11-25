@@ -1,10 +1,10 @@
 # TechPulse — current project handoff
 
-Updated2026-11-24 by Codex (lead engineer), task H01: reconcile documentation with verified source, installation and CI. This is a documentation-only pass. The user requested quick, resource-conscious continuation; use focused passes and avoid extra agents or expensive builds unless needed.
+Updated2026-11-24 by Codex (lead engineer), task DEV01: resume in VS Code and correct SEC standalone cash-flow availability. Historical installation/release evidence below remains applicable; current-pass details supersede older totals/checkpoints. The user requested quick, resource-conscious continuation; use focused passes and avoid extra agents or expensive builds unless needed.
 
 ## Verified checkpoint and scope
 
-- Branch: main. Verified runtime/source checkpoint: **8602677f0f9d3347aec5570516f7ec3854a21c58** (permanent desktop installation). Remote main matched that checkpoint before this handoff-only commit. Repository: https://github.com/rp20owers-source/TechPulse . This documentation commit does not change runtime code.
+- Branch: main. Starting checkpoint26a97596b9644d19acf3edc497b5aac979ba649d; last CI-verified runtime checkpoint8602677f0f9d3347aec5570516f7ec3854a21c58. This handoff belongs to the VS Code/SEC-fix feature commit. Repository: https://github.com/rp20owers-source/TechPulse . New-pass remote CI has not yet been observed; do not substitute the earlier passing run for it.
 - Product: native PySide6 Windows desktop **research preview**, with16 requested workspaces. The full65-requirement production objective remains incomplete; authoritative coverage: docs/REQUIREMENTS.md and ROADMAP.md. Do not interpret a page title as a completed data integration.
 - Current development source is the repository under outputs/TechPulse. The public v0.1.0 source prerelease/ZIP is older: it does not contain the later SEC extensions or permanent desktop installer. Use current main for continued work. Release: https://github.com/rp20owers-source/TechPulse/releases/tag/v0.1.0 . No public frozen executable is published.
 
@@ -28,21 +28,25 @@ Updated2026-11-24 by Codex (lead engineer), task H01: reconcile documentation wi
 
 ## Actual validation
 
-- Last full local suite: **120 tests passed +5 subtests**,5.00s in desktop pass. Ruff lint/format and Mypy10 runtime files passed. PowerShell installer parsed successfully. No tests rerun for this documentation-only pass because code did not change.
-- **Latest source CI independently checked this pass:** all four jobs passed (Windows/Ubuntu × Python3.12/3.14) for8602677: https://github.com/rp20owers-source/TechPulse/actions/runs/45520123186 . Manual Windows build job was skipped, not passed. Earlier SEC/ticker commits also passed their matrices.
+- Latest full local suite: **123 tests passed +5 subtests**,2.37s in current project-local .venv. Ruff lint/format and Mypy10 runtime files passed. Prior PowerShell installer parse succeeded. Three added regression cases cover standalone cash-flow amounts with missing/zero revenue and withheld amounts for mismatched cash-flow accessions.
+- **Previously verified source CI:** all four jobs passed (Windows/Ubuntu × Python3.12/3.14) for8602677: https://github.com/rp20owers-source/TechPulse/actions/runs/45520123186 . Manual Windows build job was skipped, not passed. Earlier SEC/ticker commits also passed their matrices.
 - Installed native smoke passed all16 pages in both workspaces from C:/Windows/System32 with PYTHONPATH empty and a temporary test data directory. This verifies workspace independence on this host, not a clean-machine install without Python.
 - Earlier independent financial/security/product/report reviews and corrective probes are under docs/research/. Fictional sample PDF7 pages and empty/Unicode stress layouts were rendered/inspected. USAspending live search was verified. SEC/Alpaca/CoinGecko contact/credential-based live checks and independent review of the newer SEC normalizer are still pending.
 - Earlier package-advisory scan found no known advisories for15 runtime packages; not a native Qt security certification. Local PyInstaller engineering artifact passed after excluding unrelated Poppler ICU from build PATH, but was not publicly distributed. Binary source/notice/replacement/security/clean-machine gates remain open.
 
-## This pass: changes, commands and results
+## Current pass: VS Code resumption and cash-flow fix
 
-- Modified: PROJECT_HANDOFF.md; archived prior version at docs/handoffs/012-before-handoff-reconciliation.md; refreshed user-facing outputs/TechPulse-PROJECT_HANDOFF.md. The installed copy also receives this current handoff. No runtime, dependency or data changes.
-- Commands: Get-Content handoff/AGENTS; git status/log/ls-remote; gh run list/view; read local installation manifest; Get-FileHash repository/installed modules; inspect shortcut targets through WScript.Shell; archive/write/copy; git diff --check/commit/push and saved-copy hash verification.
-- Results: clean starting working tree; source/installed/manifest hashes10/10 match; shortcuts2/2 match; CI4/4 pass. No failed approach in this pass; no new dependency. Historical failures/fixes remain in archived handoffs (Qt ICU collision, launcher test alias, scheduler/backup/import/provenance and SEC mock/type issues).
+- Opened the actual repository in a new VS Code window, first with PROJECT_HANDOFF.md and then docs/DEVELOPMENT.md. Verified window title DEVELOPMENT.md - TechPulse - Visual Studio Code. Python/debugpy/Pylance extensions already installed; no extension installation or agents required.
+- Created project-local .venv with `uv sync --frozen --extra dev` using cached locked packages. No lock/dependency changes. Added .vscode launch/settings/tasks/extension recommendations. F5 configurations explicitly select .venv/Scripts/python.exe; app and smoke use ignored user-data/development and user-data/smoke, not the installed personal database. Tasks run pytest, Ruff and Mypy. JSON parsed successfully; commands were executed directly, not claimed as a clicked F5 debugger test.
+- Corrected SEC FCF availability: matching operating-cash-flow/PP&E payment facts can produce the amount without positive revenue. FCF margin still requires positive revenue with identical period/accession. Reporting period is exposed in the SEC preview; no valuation/score or historical snapshot claim introduced.
+- Source native all16-page/two-workspace smoke passed using project .venv and isolated data; latest full suite123 tests+5subtests passed. No installed app process was found before refreshing permanent installation with install_windows.ps1 -NoLaunch. Research data and user sessions preserved. Installed source hashes verified against repository/manifest after update.
+- Modified: .vscode/{settings,launch,tasks,extensions}.json; src/techpulse/{sec,app}.py; tests/test_sec.py; docs/DEVELOPMENT.md; README, CHANGELOG, TASKS, VALIDATION, handoff and docs/handoffs/013-before-vscode-resume.md. Refreshed saved/installed handoff copies. No new package, binary rebuild or public release.
+- Commands: read handoff/AGENTS/architecture/tasks; git status/log; code --new-window/--goto/--list-extensions and window-title inspection; uv sync; JSON validation; Ruff, Mypy, pytest; native smoke; process-presence check; source installer update; hash verification; archive/write/copy; git diff/check/commit/push.
+- Failed approaches: none. SEC_USER_AGENT remains unset, so no SEC live request was attempted using an invented contact. New financial change is regression-tested but not independently reviewed. Public v0.1.0 release is still older than main.
 
 ## Next actionable work / acceptance
 
-1. Verify an authorized live SEC request using user-declared contact and independently review normalization. Offline fixture tests do not establish live data accuracy.
+1. In VS Code, read docs/DEVELOPMENT.md, use F5 with isolated data, and continue G02. Verify an authorized live SEC request using user-declared contact and independently review normalization. Offline fixture tests do not establish live data accuracy.
 2. Define source-backed fundamental/catalyst research criteria before enabling additional scoring components. Preserve units, exact periods/accessions, publication timing and abstention; do not claim current aggregates are point-in-time archives or heuristic scores are probabilities.
 3. Continue deferred coverage/benchmarks, historical/IFRS/quarterly/TTM data, restore/migrations/large-universe performance and public binary gates in REQUIREMENTS/ROADMAP.
 

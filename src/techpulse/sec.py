@@ -117,11 +117,12 @@ def normalize_company_facts(payload: dict, as_of: str | None = None) -> dict:
 
     revenue = metrics["revenue"]
     margin = fcf = fcf_margin = growth = None
+    if aligned("operating_cash_flow", "capital_expenditure"):
+        fcf = metrics["operating_cash_flow"]["value"] - metrics["capital_expenditure"]["value"]
     if revenue and revenue["value"] > 0:
         if aligned("revenue", "net_income"):
             margin = 100 * metrics["net_income"]["value"] / revenue["value"]
-        if aligned("revenue", "operating_cash_flow", "capital_expenditure"):
-            fcf = metrics["operating_cash_flow"]["value"] - metrics["capital_expenditure"]["value"]
+        if fcf is not None and aligned("revenue", "operating_cash_flow", "capital_expenditure"):
             fcf_margin = 100 * fcf / revenue["value"]
         prior = [
             r
@@ -157,6 +158,9 @@ def normalize_company_facts(payload: dict, as_of: str | None = None) -> dict:
         "metrics": metrics,
         "net_margin_pct": margin,
         "free_cash_flow_usd": fcf,
+        "free_cash_flow_period_end": metrics["operating_cash_flow"]["period_end"]
+        if fcf is not None
+        else None,
         "fcf_margin_pct": fcf_margin,
         "revenue_growth_pct": growth,
         "warnings": warnings,

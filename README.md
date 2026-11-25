@@ -29,6 +29,8 @@ Or `python -m pip install -e .` and `python -m techpulse`. Start offline; no acc
 
 ## Development
 
+VS Code Run/Debug and test tasks are included; see [resuming in VS Code](docs/DEVELOPMENT.md). F5 uses isolated development data.
+
 ```powershell
 uv run pytest
 uv run ruff check .

@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "TechPulse: Desktop (isolated development data)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "techpulse",
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "TECHPULSE_DATA_DIR": "${workspaceFolder}/user-data/development",
+        "QT_QPA_PLATFORM": "windows"
+      },
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe"
+    },
+    {
+      "name": "TechPulse: Native smoke check",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "techpulse",
+      "args": [
+        "--smoke-test",
+        "--data-dir",
+        "${workspaceFolder}/user-data/smoke"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "QT_QPA_PLATFORM": "windows"
+      },
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe"
+    }
+  ]
+}
