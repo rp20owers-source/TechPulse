@@ -41,6 +41,8 @@ def main():
         "tkinter",
         "--collect-data",
         "reportlab",
+        "--collect-data",
+        "techpulse",
         str(ROOT / "packaging" / "entrypoint.py"),
     ]
     # A developer PATH may include unrelated Qt/ICU DLLs (for example Poppler).

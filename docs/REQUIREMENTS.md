@@ -68,6 +68,6 @@ Verified implementation coverage, **not a declaration that the master product is
 |62|Offline demo/cache access|Local:fictional demo and retained authorized imports; provider previews intentionally not cached|
 |63|Rate/security/licensing controls|Partial:bounded adapters/secret redaction/research gates; no encrypted licensed cache or cross-device quota accounting|
 |64|Tests/recovery/backups/reproducible builds|Partial:tests/types/lint/lock/CI/consistent backup; no migration/restore GUI or clean-machine certification|
-|65|Installers/GitHub releases|Partial:public source repo/release and Windows bootstrap/build scripts; signed professional installer/public binary gate open|
+|65|Installers/GitHub releases|Partial:public source release, per-user desktop source installer/shortcuts verified on host; signed public binary and clean-machine gates remain open|
 
 The most important remaining dependencies are lawful broad data coverage, point-in-time fundamentals and events, independent pattern validation, multi-source scoring criteria, recommendation benchmarks, dependency/source compliance and clean-machine distribution. No amount of decorative UI can satisfy those gates. See ROADMAP.md and TASKS.md for continuation.

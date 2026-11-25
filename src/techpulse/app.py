@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pyqtgraph as pg
 from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, QTimer, QUrl, Signal
-from PySide6.QtGui import QColor, QDesktopServices, QFont
+from PySide6.QtGui import QColor, QDesktopServices, QFont, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -213,6 +213,7 @@ class MainWindow(QMainWindow):
         self.worker: Worker | None = None
         self.page_errors: list[str] = []
         self.setWindowTitle("TechPulse · Financial research terminal")
+        self.setWindowIcon(QIcon(str(Path(__file__).parent / "assets" / "techpulse.svg")))
         self.resize(1480, 940)
         self.setMinimumSize(1100, 720)
         root = QWidget()

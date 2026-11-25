@@ -17,3 +17,5 @@ This does not establish comprehensive market coverage, validated predictions, re
 - SEC annual US-GAAP fundamentals preview and offline companyfacts JSON normalization, source/filing provenance, conservative cutoff and aligned ratios. Session-only; no score changes or new dependencies.
 
 - Exact SEC ticker-to-CIK lookup for annual fundamentals, with ambiguous/missing matches rejected and current-directory provenance retained.
+
+- Per-user Windows desktop installer with a permanent application/runtime folder, custom icon, Desktop/Start menu shortcuts, and console-free launch.

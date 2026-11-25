@@ -21,3 +21,5 @@ Next development task G02: implement point-in-time SEC fundamentals normalizatio
 G02 update: implemented bounded SEC annual companyfacts retrieval/offline normalization/session UI with filing cutoff, USD units, accession provenance and aligned ratios. Full historical snapshots, quarterly/TTM data and independent review remain open. Next: verify an authorized live SEC request with user-supplied contact, independently review this normalizer, then define fundamental/catalyst criteria without treating current aggregates as historical archives.
 
 G02 usability: SEC preview accepts an exact ticker or numeric CIK; current official directory associations are source-attributed, ambiguity rejected, lookup/facts requests share a budget. Historical mapping and live contact-based verification remain open.
+
+D02: per-user desktop source installation completed on the development host, independent of workspace runtime, with dedicated dependencies and shortcuts. Native installed smoke passed. Future code updates must rerun packaging/install_windows.ps1 to refresh the installed copy; public frozen-binary/clean-machine gates remain open.

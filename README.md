@@ -8,6 +8,14 @@ Free, open-source, local-first **Windows desktop research preview** for technolo
 
 On Windows, double-click **Start-TechPulse.cmd** with Python 3.12–3.14 installed. First setup downloads the free, hash-locked dependencies; subsequent offline research needs no API key. See [the user guide](docs/USER_GUIDE.md), [CSV schemas](docs/IMPORT_FORMATS.md) and [all 65 requirement statuses](docs/REQUIREMENTS.md).
 
+## Install on Windows
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\packaging\install_windows.ps1
+```
+
+Installs a dedicated runtime and source under `%LOCALAPPDATA%\Programs\TechPulse`, creates Desktop/Start menu shortcuts and opens the native GUI. Python3.12–3.14 is required; no admin rights needed. Data stays in its separate existing app-data folder. This per-user source installer is distinct from the gated public bundled executable.
+
 ## Run from source
 
 Python 3.12–3.14 and [uv](https://docs.astral.sh/uv/) are supported.

@@ -52,3 +52,11 @@ Data Sources & Health now includes **Preview SEC annual fundamentals** and **Ope
 Only annual US-GAAP USD facts from10-K/10-K/A are normalized. Filing dates must strictly precede the cutoff; later restatements and same-day filings are excluded. Revenue/net income/operating cash flow/PP&E acquisition payments retain tag, period, accession and source URL. Margins and free cash flow require matching periods and accessions; growth requires a comparable prior year in the same filing. Ambiguous or unavailable values stay unavailable. FCF here excludes other capitalized investments.
 
 All results remain session-only and do not change scores, asset metadata, archives or exports. Current companyfacts aggregates are not guaranteed historical point-in-time snapshots. IFRS/custom tags, quarterly/TTM metrics, complete restatement reconciliation, valuation and automatic multi-source scoring remain future work.
+
+## Install as a desktop application
+
+On Windows run `powershell -NoProfile -ExecutionPolicy Bypass -File .\packaging\install_windows.ps1` from the source folder. This installs the latest source and its hash-locked dependencies under `%LOCALAPPDATA%\Programs\TechPulse`, adds **TechPulse** shortcuts to the Desktop and Start menu, and opens the native app without a console. Python3.12-3.14 must already be installed; admin rights are not needed. This is a per-user source installation, not a signed public binary installer.
+
+The app starts from its own installation folder and dedicated runtime; it no longer depends on the Codex workspace. Existing personal state remains under `%LOCALAPPDATA%\TechPulse`. Running the script again updates the installed source; close installed app windows before updating. `-NoLaunch` installs without opening. The installer refuses unrelated nonempty target folders or unrelated existing shortcuts. It copies no user database, Git history or scratch files.
+
+To uninstall manually, close installed TechPulse windows, remove its Desktop and Start menu shortcuts, and remove `%LOCALAPPDATA%\Programs\TechPulse`. Retain `%LOCALAPPDATA%\TechPulse` to preserve research data, or back it up before choosing to remove it. No system service, scheduled task or registry security change is installed.
