@@ -15,6 +15,7 @@ This does not establish comprehensive market coverage, validated predictions, re
 ## Unreleased
 
 - Startup recovery screen preserves the failed data folder and can open another checked workspace, recover a backup into a unique folder, or start fresh separately. Optional next-launch folder preference honors explicit overrides; existing empty/corrupt files are checked before initialization. Store paths are absolute and failed initialization closes its connection.
+- Backup creation rejects hard-link aliases of the active database before opening a destination connection.
 
 - SEC annual US-GAAP fundamentals preview and offline companyfacts JSON normalization, source/filing provenance, conservative cutoff and aligned ratios. Session-only; no score changes or new dependencies.
 

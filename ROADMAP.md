@@ -16,6 +16,6 @@ No phase is complete merely because a navigation page exists. Initial delivery t
 | 09 Opportunities | Explainable weights, contradictory evidence, abstention; local paper ledger and benchmark | Score/abstention/ledger verified; full signal synthesis/recommendation benchmarks deferred |
 | 10 Reporting | Four formats, sections, archive; opt-in Monday catch-up in app | Functional exports/scheduler verified; human-readable PDF/HTML QA passed |
 | 11 GUI | Dark/light, sort/search/filter, interactive charts, usable empty/error states, visual review | Independent native Windows review passed; large-universe performance unverified |
-| 12 Validation | Independent reviews, financial/security tests, regression pass, limitations inventory | Independent targeted reviews,186 local tests and earlier package scan passed; production gates remain |
+| 12 Validation | Independent reviews, financial/security tests, regression pass, limitations inventory | Independent targeted reviews,187 local tests and earlier package scan passed; production gates remain |
 | 13 Distribution | Reproducible lock, Windows build, smoke test, verified release; clean machine gate | Source preview/launcher packaged; local frozen smoke passed; public binaries/clean-machine gate open |
 | 14 Final audit | Honest coverage matrix, unresolved risks, updated handoff and follow-up backlog | 65-item coverage, independent reviews and continuation handoff documented; production acceptance remains open |
