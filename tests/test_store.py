@@ -181,3 +181,20 @@ def test_settings_watchlists_backup_and_snapshot_are_local(store, tmp_path):
     with pytest.raises(sqlite3.Error):
         store.backup(invalid)
     invalid.unlink()
+
+
+def test_backup_rejects_hard_link_to_active_database_before_connecting(store, tmp_path, monkeypatch):
+    import os
+
+    alias = tmp_path / "same-database-under-another-name.db"
+    os.link(store.path, alias)
+    assert alias.resolve() != store.path and alias.samefile(store.path)
+    store.set_setting("hard_link_guard_marker", "synthetic preserved data")
+
+    def must_not_connect(*args, **kwargs):
+        pytest.fail("An alias of the active database must be rejected before destination connection")
+
+    monkeypatch.setattr("techpulse.store.sqlite3.connect", must_not_connect)
+    with pytest.raises(ValueError, match="different backup path"):
+        store.backup(alias)
+    assert store.setting("hard_link_guard_marker") == "synthetic preserved data"

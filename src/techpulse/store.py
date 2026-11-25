@@ -501,7 +501,7 @@ class Store:
 
     def backup(self, target):
         target = Path(target)
-        if target.resolve() == self.path.resolve():
+        if target.resolve() == self.path or (target.exists() and target.samefile(self.path)):
             raise ValueError("Choose a different backup path")
         target.parent.mkdir(parents=True, exist_ok=True)
         with closing(sqlite3.connect(target)) as destination:
