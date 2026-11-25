@@ -19,6 +19,8 @@ The project's .venv is ignored by Git. Debug configurations explicitly use .venv
 
 Optional SEC/provider configuration can be set in the environment or an untracked .env file. Never commit credentials/contact details or invent a SEC_USER_AGENT. No SEC live verification is implied by fixture tests. The current feature backlog/acceptance criteria are in TASKS.md and PROJECT_HANDOFF.md.
 
+Startup now validates an existing database before opening it. A corrupt development database opens the recovery screen; preserve that folder and choose another folder or recover a backup separately. F5's explicit data-directory override disables saving a desktop default, so development recovery cannot redirect normal desktop launches. Unattended smoke checks fail without opening a recovery dialog and preserve existing invalid files. `tests/test_startup.py` uses only isolated synthetic folders/preferences.
+
 ## Refresh the desktop installation
 
 Close installed TechPulse windows safely, then run:

@@ -39,6 +39,8 @@ uv run mypy src/techpulse
 
 Read AGENTS.md and PROJECT_HANDOFF.md before editing. Shared instructions also support Claude, Gemini and Copilot. Local state lives in `%LOCALAPPDATA%\TechPulse` (or the platform equivalent); override with `TECHPULSE_DATA_DIR`. API credentials are environment variables only, never stored in the application database.
 
+If the app cannot open existing data, its startup recovery screen can check another folder or recover a backup into a new folder while preserving the original. A saved recovery location can become the desktop default; explicit data-directory overrides still take precedence. See [startup recovery](docs/USER_GUIDE.md#when-the-app-cannot-open-its-data).
+
 ## Financial and data boundaries
 
 All rankings are transparent research heuristics. Missing evidence reduces coverage; insufficient evidence produces **no candidate**. Scores are not probabilities. Pattern observations are exploratory and carry no predictive confidence. Disclosure-inspired analysis begins at publication, not transaction time. Contract ceilings are not guaranteed revenue. Calls and puts do not establish the trader's intent.
