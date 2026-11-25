@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pyqtgraph as pg
 from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, QTimer, QUrl, Signal
-from PySide6.QtGui import QColor, QDesktopServices, QFont, QIcon
+from PySide6.QtGui import QDesktopServices, QFont, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -22,7 +22,6 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QFrame,
     QHBoxLayout,
-    QHeaderView,
     QInputDialog,
     QLabel,
     QLineEdit,
@@ -33,8 +32,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSpinBox,
-    QTableWidget,
-    QTableWidgetItem,
     QTextBrowser,
     QVBoxLayout,
     QWidget,
@@ -45,6 +42,7 @@ from .demo import seed_demo
 from .reports import SECTIONS, export_report, html_text, snapshot
 from .research import asset_rows, correlations, disclosure_performance, opportunity
 from .store import Store, data_directory, utc_now
+from .tables import ResearchTable
 
 PAGES = [
     "Dashboard",
@@ -123,55 +121,7 @@ def card(title=None):
 
 
 def table(rows, columns, min_height=280):
-    widget = QTableWidget(len(rows), len(columns))
-    widget.setHorizontalHeaderLabels([title for title, _ in columns])
-    widget.verticalHeader().hide()
-    widget.setAlternatingRowColors(True)
-    widget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-    widget.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-    widget.setShowGrid(False)
-    widget.verticalHeader().setDefaultSectionSize(39)
-    widget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-    widget.horizontalHeader().setStretchLastSection(True)
-    widget.setMinimumHeight(min_height)
-    for row_index, row in enumerate(rows):
-        for col_index, (title, key) in enumerate(columns):
-            value = row.get(key)
-            item = QTableWidgetItem()
-            if isinstance(value, (int, float)) and not isinstance(value, bool):
-                # Display numeric values with a sortable numeric user role.
-                item = NumericItem(fmt(value), value)
-                item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-                if "pct" in key or key in {"pnl"}:
-                    instance = QApplication.instance()
-                    dark = instance is None or instance.property("techpulse_theme") != "light"
-                    item.setForeground(
-                        QColor(
-                            ("#43cbb0" if value >= 0 else "#f58c9c")
-                            if dark
-                            else ("#116f61" if value >= 0 else "#b72848")
-                        )
-                    )
-            else:
-                item.setText(fmt(value))
-            item.setToolTip(str(value) if value is not None else "Unavailable; not inferred")
-            widget.setItem(row_index, col_index, item)
-    widget.horizontalHeader().setSortIndicator(-1, Qt.SortOrder.AscendingOrder)
-    widget.setSortingEnabled(True)
-    if not rows:
-        widget.setRowCount(1)
-        widget.setItem(0, 0, QTableWidgetItem("No observations in this workspace"))
-        widget.setSpan(0, 0, 1, len(columns))
-    return widget
-
-
-class NumericItem(QTableWidgetItem):
-    def __init__(self, text, numeric):
-        super().__init__(text)
-        self.numeric = numeric
-
-    def __lt__(self, other):
-        return self.numeric < other.numeric if isinstance(other, NumericItem) else super().__lt__(other)
+    return ResearchTable(rows, columns, fmt, min_height)
 
 
 class WorkerSignals(QObject):
@@ -205,6 +155,8 @@ class MainWindow(QMainWindow):
         self.store = store or Store()
         seed_demo(self.store)
         self.closed = False
+        self.recovery_busy = False
+        self.last_recovery_point = ""
         self.mode = "demo"
         self.page = "Dashboard"
         self.active_symbol = "SYN-AI"
@@ -313,8 +265,8 @@ class MainWindow(QMainWindow):
         QPushButton#primary {{background:#24b7a4;color:#042e2a;border-color:#24b7a4;font-weight:650;}}
         QLineEdit,QComboBox,QSpinBox,QDoubleSpinBox {{background:{panel};border:1px solid {border};border-radius:5px;padding:7px;min-height:18px;}}
         QComboBox QAbstractItemView {{background:{panel};selection-background-color:#21766c;}}
-        QTableWidget {{background:{panel};alternate-background-color:{alternate};border:0;selection-background-color:#1b5c59;selection-color:white;}}
-        QTableWidget::item {{padding:7px;border-bottom:1px solid {border};}}
+        QTableView {{background:{panel};alternate-background-color:{alternate};border:0;selection-background-color:#1b5c59;selection-color:white;}}
+        QTableView::item {{padding:7px;border-bottom:1px solid {border};}}
         QHeaderView::section {{background:{panel};color:{muted};border:0;border-bottom:1px solid {border};padding:10px;font-size:11px;}}
         QTextBrowser {{background:{panel};border:1px solid {border};border-radius:8px;padding:12px;}}
         QScrollArea {{background:transparent;}}
@@ -685,8 +637,8 @@ class MainWindow(QMainWindow):
         self.content.addWidget(frame)
 
     def _row_record(self, grid, row, records, key):
-        value = grid.item(row, 0).text()
-        return [r for r in records if str(r.get(key)) == value]
+        selected = grid.record(row)
+        return [r for r in records if selected is not None and r.get(key) == selected.get(key)]
 
     def open_chart(self, symbol):
         self.active_symbol = symbol
@@ -1130,7 +1082,7 @@ class MainWindow(QMainWindow):
         )
 
     def check_schedule(self):
-        if self.closed:
+        if self.closed or self.recovery_busy:
             return
         now = datetime.now().astimezone()
         monday = now.date() - timedelta(days=now.weekday())
@@ -1160,7 +1112,7 @@ class MainWindow(QMainWindow):
         )
 
         def open_report(r, c):
-            row = next((v for v in records if str(v["id"]) == grid.item(r, 0).text()), None)
+            row = grid.record(r)
             if row:
                 self.preview_report(json.loads(row["payload"]))
 
@@ -1298,7 +1250,7 @@ class MainWindow(QMainWindow):
         )
 
     def run_provider(self, title, fn):
-        if self.worker:
+        if self.worker or self.recovery_busy:
             self.error("A provider request is already running")
             return
         if self.mode != "research":
@@ -1369,7 +1321,7 @@ class MainWindow(QMainWindow):
     def open_sec_json(self):
         from .sec import normalize_company_facts
 
-        if self.worker:
+        if self.worker or self.recovery_busy:
             self.error("Wait for the active provider request to finish")
             return
 
@@ -1515,6 +1467,15 @@ class MainWindow(QMainWindow):
             )
         )
         layout.addWidget(button("Create SQLite backup", self.backup))
+        layout.addWidget(button("Inspect and restore SQLite backup", self.restore_backup_dialog))
+        layout.addWidget(
+            label(
+                "Restore replaces both workspaces, paper trades, reports and settings. A copy of the current database is saved first. Close other TechPulse windows before restoring; concurrent edits are not covered by that safety copy.",
+                "muted",
+            )
+        )
+        if self.last_recovery_point:
+            layout.addWidget(label("Previous state saved at: " + self.last_recovery_point, "muted"))
         self.content.addWidget(frame)
         frame, layout = card("SEC access · contact for this session")
         contact = QLineEdit(self.sec_user_agent)
@@ -1594,6 +1555,61 @@ class MainWindow(QMainWindow):
             except (ValueError, OSError, sqlite3.Error) as exc:
                 self.error(str(exc))
 
+    def restore_backup_dialog(self):
+        from .recovery import RecoveryError, inspect_backup, restore_database
+
+        if self.worker or self.recovery_busy:
+            self.error("Wait for the current data operation to finish")
+            return
+        path, _ = QFileDialog.getOpenFileName(self, "Inspect a TechPulse SQLite backup", "", "SQLite (*.db)")
+        if not path:
+            return
+        self.recovery_busy = True
+        self.scheduler.stop()
+        try:
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            try:
+                summary = inspect_backup(path)
+            finally:
+                QApplication.restoreOverrideCursor()
+            counts = summary["rows"]
+            box = QMessageBox(self)
+            box.setWindowTitle("Restore this backup?")
+            box.setIcon(QMessageBox.Icon.Warning)
+            box.setTextFormat(Qt.TextFormat.PlainText)
+            box.setText(
+                f"Validated backup: {counts['assets']} assets, {counts['bars']} price observations, {counts['paper']} paper transactions and {counts['reports']} reports.\n\nThis replaces both current workspaces and their settings. The current database will first be saved in its recovery folder. Close other TechPulse windows before continuing; edits made in another window after that safety copy are not protected.\n\nRestore the selected backup?"
+            )
+            box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+            box.setDefaultButton(QMessageBox.StandardButton.Cancel)
+            if box.exec() != QMessageBox.StandardButton.Yes:
+                self.status.setText("Restore cancelled; current data unchanged")
+                return
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            try:
+                result = restore_database(self.store, path)
+            finally:
+                QApplication.restoreOverrideCursor()
+            self.last_recovery_point = result["recovery_point"]
+            self.live_results = []
+            self.sec_user_agent = ""
+            seed_demo(self.store)
+            self.theme = self.store.setting("theme", "dark")
+            assets = self.store.assets(self.mode)
+            self.active_symbol = assets[0]["symbol"] if assets else ""
+            self.apply_theme()
+            self.rebuild_page()
+            self.status.setText(
+                "Backup restored. Previous data saved at "
+                + self.last_recovery_point
+                + (" · " + result["warning"] if result.get("warning") else "")
+            )
+        except (RecoveryError, sqlite3.Error, OSError, ValueError) as exc:
+            self.error(str(exc))
+        finally:
+            self.recovery_busy = False
+            self.scheduler.start(60_000)
+
     def import_dialog(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Import authorized CSV into personal research")
@@ -1670,8 +1686,8 @@ class MainWindow(QMainWindow):
         box.exec()
 
     def closeEvent(self, event):
-        if self.worker:
-            self.status.setText("A bounded provider request is finishing. Close again after it completes.")
+        if self.worker or self.recovery_busy:
+            self.status.setText("A data operation is finishing. Close again after it completes.")
             event.ignore()
             return
         self.closed = True

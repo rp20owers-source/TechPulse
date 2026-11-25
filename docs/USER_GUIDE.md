@@ -64,3 +64,13 @@ To uninstall manually, close installed TechPulse windows, remove its Desktop and
 ### Session-only SEC contact
 
 Settings now includes an SEC contact field. Enter your application name and real contact email, then select **Use contact for this session**. No restart is needed. That declared contact is sent to the SEC only when you request live SEC data; it is not saved to SQLite, reports, backups, Windows settings or the repository. It resets on a new app session. **Clear session contact** restores the SEC_USER_AGENT environment fallback if present; it does not cancel an in-flight request. Header values must be printable ASCII and at most256 characters. Offline companyfacts JSON needs no contact.
+
+## Restore from a verified backup
+
+In Settings choose **Inspect and restore SQLite backup**. The app checks the selected file's schema, SQLite integrity and supported records before showing its counts. Cancel is the default. Restore replaces **both** demo/personal workspaces, watchlists, paper trades, reports and saved settings; a copy of the current database is first saved under the active database folder's `recovery/` directory. The success status shows that safety-copy path. Session-only provider results and SEC contact are cleared.
+
+Close other TechPulse windows before confirming. Changes made by another process after the safety copy are not guaranteed to be preserved. Do not interrupt the app while restoring. Restore rechecks a private staged snapshot before replacement, retains the pre-restore safety copy, and reports cleanup warnings separately if data has already been restored. If startup cannot open a corrupt database, the manual recovery procedure above still applies; automatic startup recovery is not implemented.
+
+This preview supports schema version1 only, canonical application tables/constraints, at most2GiB logical SQLite size, one million total rows and32MiB per JSON field, with a cooperative30-second budget for each inspection/restore operation. Unsupported/custom schemas, triggers, malformed data and future schema versions are rejected. These limits can reject otherwise salvageable large/modified databases: keep the original backup and use manual recovery rather than editing it in place. Backups and recovery copies are unencrypted private data; retain them only as your imported-data permissions allow.
+
+Tables now render cells lazily and sort the full local result set numerically. This reduces per-cell UI allocation, but provider coverage and whole-universe analytics limits still apply. Archive report selection uses the underlying record identity, so display formatting does not prevent a report from opening.

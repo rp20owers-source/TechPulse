@@ -20,6 +20,38 @@ from urllib.parse import parse_qsl, urlparse
 MODES = {"demo", "research"}
 KINDS = {"equity", "crypto", "benchmark"}
 
+SCHEMA_SQL = """
+        CREATE TABLE IF NOT EXISTS assets(mode TEXT, symbol TEXT, payload TEXT NOT NULL, PRIMARY KEY(mode,symbol));
+        CREATE TABLE IF NOT EXISTS bars(mode TEXT, symbol TEXT, date TEXT, payload TEXT NOT NULL, PRIMARY KEY(mode,symbol,date));
+        CREATE TABLE IF NOT EXISTS records(mode TEXT, kind TEXT, id TEXT, payload TEXT NOT NULL, PRIMARY KEY(mode,kind,id));
+        CREATE TABLE IF NOT EXISTS watchlist(mode TEXT, symbol TEXT, PRIMARY KEY(mode,symbol));
+        CREATE TABLE IF NOT EXISTS paper(id INTEGER PRIMARY KEY, mode TEXT, symbol TEXT, side TEXT, quantity TEXT, price TEXT, fee TEXT, date TEXT);
+        CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS reports(id INTEGER PRIMARY KEY, mode TEXT, created_at TEXT, title TEXT, payload TEXT);
+        PRAGMA user_version=1;
+        """
+
+
+def check_schema(connection):
+    """Reject unfamiliar schemas before initialization, recovery or journal writes."""
+    with closing(sqlite3.connect(":memory:")) as expected:
+        expected.executescript(SCHEMA_SQL)
+        query = "SELECT type,name,tbl_name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name"
+
+        def normalized(rows):
+            return [
+                (kind, name, table, re.sub(r"\s+", "", sql or "").casefold())
+                for kind, name, table, sql in rows
+            ]
+
+        if normalized(connection.execute(query).fetchall()) != normalized(expected.execute(query).fetchall()):
+            raise ValueError("Database structure is not a supported TechPulse schema; it was not changed")
+        for (table,) in expected.execute("SELECT name FROM sqlite_master WHERE type='table'"):
+            if [tuple(r) for r in connection.execute(f'PRAGMA table_info("{table}")')] != [
+                tuple(r) for r in expected.execute(f'PRAGMA table_info("{table}")')
+            ]:
+                raise ValueError("Database column constraints are incompatible; it was not changed")
+
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -184,17 +216,24 @@ class Store:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.db = sqlite3.connect(self.path)
         self.db.row_factory = sqlite3.Row
+        try:
+            version = self.db.execute("PRAGMA user_version").fetchone()[0]
+            if version not in (0, 1):
+                raise ValueError(
+                    "This database requires a different TechPulse schema version; it was not changed"
+                )
+            if (
+                version == 0
+                and self.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' LIMIT 1").fetchone()
+            ):
+                raise ValueError("This is not an initialized TechPulse database; it was not changed")
+            if version == 1:
+                check_schema(self.db)
+        except (sqlite3.Error, ValueError):
+            self.db.close()
+            raise
         self.db.execute("PRAGMA journal_mode=WAL")
-        self.db.executescript("""
-        CREATE TABLE IF NOT EXISTS assets(mode TEXT, symbol TEXT, payload TEXT NOT NULL, PRIMARY KEY(mode,symbol));
-        CREATE TABLE IF NOT EXISTS bars(mode TEXT, symbol TEXT, date TEXT, payload TEXT NOT NULL, PRIMARY KEY(mode,symbol,date));
-        CREATE TABLE IF NOT EXISTS records(mode TEXT, kind TEXT, id TEXT, payload TEXT NOT NULL, PRIMARY KEY(mode,kind,id));
-        CREATE TABLE IF NOT EXISTS watchlist(mode TEXT, symbol TEXT, PRIMARY KEY(mode,symbol));
-        CREATE TABLE IF NOT EXISTS paper(id INTEGER PRIMARY KEY, mode TEXT, symbol TEXT, side TEXT, quantity TEXT, price TEXT, fee TEXT, date TEXT);
-        CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS reports(id INTEGER PRIMARY KEY, mode TEXT, created_at TEXT, title TEXT, payload TEXT);
-        PRAGMA user_version=1;
-        """)
+        self.db.executescript(SCHEMA_SQL)
 
     @staticmethod
     def _mode(mode):

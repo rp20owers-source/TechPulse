@@ -27,3 +27,5 @@ D02: per-user desktop source installation completed on the development host, ind
 DEV01: opened source in VS Code, configured project-local locked .venv and Run/Debug/test/lint/type tasks with isolated data, fixed SEC standalone FCF amount availability and exposed its period;123 tests passed. Installed source refreshed safely. Continue G02; SEC contact/live verification and independent review remain pending.
 
 G03 update2026-11-25: SEC contact can be supplied in Settings for one session; environment fallback retained. Targeted independent normalization review completed and two growth defects corrected/rechecked (overlapping annual periods, zero-current-revenue decline). Live verification still needs user-declared contact; no score generation enabled.
+
+R04 update2026-11-25: validated Settings restore with pre-restore safety copy, rollback checks, strict schema/version/logical-size handling and explicit concurrent-write limits. T01: lazy Qt tables/full-dataset numeric sorting and numeric archive-record identity fix. Startup schema rejection added. Automatic corrupt-startup recovery, migrations and broader analytics performance remain open.

@@ -1,10 +1,11 @@
 import json
 
-from PySide6.QtWidgets import QLabel, QTableWidget
+from PySide6.QtWidgets import QLabel
 
 from techpulse.app import PAGES, MainWindow
 from techpulse.reports import snapshot
 from techpulse.store import Store
+from techpulse.tables import ResearchTable
 
 
 def test_all_pages_both_workspaces_and_themes(qtbot, tmp_path):
@@ -29,7 +30,7 @@ def test_watchlist_schedule_and_memory_preview_isolation(qtbot, tmp_path):
     qtbot.addWidget(window)
     window.store.toggle_watch("demo", "SYN-AI")
     window.nav.setCurrentRow(10)
-    assert window.findChildren(QTableWidget)
+    assert window.findChildren(ResearchTable)
     window.live_results = [{"secret_marker": "SESSION_ONLY_SYNTHETIC_MARKER"}]
     report = snapshot(window.store, "demo")
     assert "SESSION_ONLY_SYNTHETIC_MARKER" not in json.dumps(report)
@@ -131,4 +132,79 @@ def test_sec_fetch_uses_session_contact_then_environment(qtbot, tmp_path, monkey
     window.set_sec_contact("")
     window.fetch_sec()
     assert calls == ["Session session@example.invalid", "Environment env@example.invalid"]
+    window.close()
+
+
+def test_restore_dialog_cancel_then_apply_preserves_previous_state(qtbot, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QFileDialog, QMessageBox
+
+    backup = tmp_path / "selected.db"
+    saved = Store(tmp_path / "saved.db")
+    saved.save_asset("research", {"symbol": "RESTORED", "kind": "equity"})
+    saved.db.commit()
+    saved.toggle_watch("research", "RESTORED")
+    saved.set_setting("theme", "light")
+    saved.backup(backup)
+    saved.close()
+    window = MainWindow(Store(tmp_path / "current.db"))
+    qtbot.addWidget(window)
+    errors = []
+    monkeypatch.setattr(window, "error", errors.append)
+    window.store.toggle_watch("demo", "SYN-AI")
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(backup), ""))
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: QMessageBox.StandardButton.Cancel)
+    window.restore_backup_dialog()
+    assert window.store.watchlist("demo") == ["SYN-AI"]
+    assert not window.last_recovery_point
+    assert not (tmp_path / "recovery").exists()
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: QMessageBox.StandardButton.Yes)
+    window.live_results = [{"session": "not stored"}]
+    window.sec_user_agent = "Test test@example.invalid"
+    window.restore_backup_dialog()
+    assert errors == []
+    assert window.store.watchlist("research") == ["RESTORED"]
+    assert window.store.watchlist("demo") == []
+    assert window.theme == "light"
+    assert not window.live_results and not window.sec_user_agent
+    assert window.scheduler.isActive() and not window.recovery_busy
+    previous = Store(window.last_recovery_point)
+    assert previous.watchlist("demo") == ["SYN-AI"]
+    previous.close()
+    window.close()
+
+
+def test_restore_dialog_rejects_corruption_before_confirmation(qtbot, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QFileDialog, QMessageBox
+
+    bad = tmp_path / "bad.db"
+    bad.write_text("not a database")
+    window = MainWindow(Store(tmp_path / "current.db"))
+    qtbot.addWidget(window)
+    errors = []
+    monkeypatch.setattr(window, "error", errors.append)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(bad), ""))
+
+    def unexpected(self):
+        raise AssertionError("Invalid backup must not reach confirmation")
+
+    monkeypatch.setattr(QMessageBox, "exec", unexpected)
+    window.restore_backup_dialog()
+    assert errors and window.scheduler.isActive() and not window.recovery_busy
+    assert len(window.store.assets("demo")) == 13
+    window.close()
+
+
+def test_archive_opens_report_using_underlying_numeric_identity(qtbot, tmp_path, monkeypatch):
+    window = MainWindow(Store(tmp_path / "archive.db"))
+    qtbot.addWidget(window)
+    report = snapshot(window.store, "demo", "Executive market summary")
+    window.store.archive_report("demo", "Selected briefing", report)
+    window.nav.setCurrentRow(13)
+    grid = window.body_scroll.widget().findChild(ResearchTable)
+    assert grid.record(0)["id"] == 1
+    assert grid.item(0, 0).text() != "1"  # Display formatting must not define identity.
+    previews = []
+    monkeypatch.setattr(window, "preview_report", previews.append)
+    grid.cellDoubleClicked.emit(0, 0)
+    assert previews == [report]
     window.close()

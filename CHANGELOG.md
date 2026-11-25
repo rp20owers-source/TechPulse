@@ -23,3 +23,6 @@ This does not establish comprehensive market coverage, validated predictions, re
 - VS Code Run/Debug, test/lint/type tasks and isolated development data. SEC free cash flow now remains available with matching cash-flow facts when revenue is missing/zero; its reporting period is shown and margin remains unavailable.
 
 - Session-only SEC contact in Settings, with immediate use and no persistence. Independent SEC review fixes reject overlapping revenue periods and correctly report a decline to zero revenue.
+
+- Settings backup inspection/restore with staged validation, canonical schema checks, automatic pre-restore safety copy, rollback/error handling and explicit concurrency limits. Startup refuses unknown/future database structures before modifying them.
+- Lazy Qt table models replace eager per-cell widgets; full-result numeric sorting preserved. Report Archive now opens numeric-ID records independently of display formatting.
