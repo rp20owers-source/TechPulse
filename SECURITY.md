@@ -9,3 +9,5 @@ SQLite, archives and backups are **unencrypted**. Import only data whose terms p
 Imports are bounded to20MB/100,000 rows and128KiB per CSV field, validated before transaction commit. This bounds inputs but does not guarantee fast rendering of a100,000-row Qt table. HTML escapes user values, external report links are not automatically opened, and CSV scalar cells are protected from formula prefixes. Database schema version1 is currently the only supported version.
 
 Security review and synthetic tests are documented, not a penetration-test certification. Dependency vulnerability scanning, signed installers, encrypted provider caches and clean-machine release testing remain gates. Provider legal/use restrictions remain independent of software security.
+
+SEC contact can optionally be entered in Settings for the current session; it is sent only as the declared SEC request header, never saved by the app. Header control/non-ASCII characters and values over256 characters are rejected with redacted errors. Clearing restores any existing environment fallback and does not cancel an already active request.

@@ -36,6 +36,21 @@ def cik_value(raw) -> str:
     return text.zfill(10)
 
 
+def declared_user_agent(value: str) -> str:
+    """Validate a header without opening a client, saving it or echoing its value."""
+    if (
+        not isinstance(value, str)
+        or not value.isascii()
+        or not value.isprintable()
+        or len(value) > 256
+        or not re.search(r"[^\s@]+@[^\s@]+\.[^\s@]+", value)
+    ):
+        raise ProviderError(
+            "Enter an application name and real contact email using printable ASCII (maximum 256 characters)"
+        )
+    return value.strip()
+
+
 def normalize_company_facts(payload: dict, as_of: str | None = None) -> dict:
     if not isinstance(payload, dict) or not isinstance(payload.get("facts"), dict):
         raise ValueError("Expected an SEC companyfacts JSON object")
@@ -124,11 +139,13 @@ def normalize_company_facts(payload: dict, as_of: str | None = None) -> dict:
             margin = 100 * metrics["net_income"]["value"] / revenue["value"]
         if fcf is not None and aligned("revenue", "operating_cash_flow", "capital_expenditure"):
             fcf_margin = 100 * fcf / revenue["value"]
+    if revenue:
         prior = [
             r
             for r in histories["revenue"]
             if r["accession"] == revenue["accession"]
             and r["concept"] == revenue["concept"]
+            and r["period_end"] < revenue["period_start"]
             and 330
             <= (date.fromisoformat(revenue["period_end"]) - date.fromisoformat(r["period_end"])).days
             <= 400
@@ -174,14 +191,9 @@ class SECProvider(_HTTPProvider):
     interval = 1.0  # conservative process-local 1/sec, below SEC fair-access ceiling
 
     def __init__(self, user_agent: str, *, client: httpx.Client | None = None):
-        if (
-            not isinstance(user_agent, str)
-            or not re.search(r"[^\s@]+@[^\s@]+\.[^\s@]+", user_agent)
-            or any(c in user_agent for c in "\r\n")
-        ):
-            raise ProviderError("Set SEC_USER_AGENT to your application name and real contact email")
+        contact = declared_user_agent(user_agent)
         super().__init__(client=client)
-        self._headers = {"User-Agent": user_agent.strip()}
+        self._headers = {"User-Agent": contact}
 
     def fundamentals_for(self, identifier, as_of=None):
         """Resolve an exact current ticker or numeric CIK, within one operation budget."""

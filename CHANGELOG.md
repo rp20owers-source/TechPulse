@@ -21,3 +21,5 @@ This does not establish comprehensive market coverage, validated predictions, re
 - Per-user Windows desktop installer with a permanent application/runtime folder, custom icon, Desktop/Start menu shortcuts, and console-free launch.
 
 - VS Code Run/Debug, test/lint/type tasks and isolated development data. SEC free cash flow now remains available with matching cash-flow facts when revenue is missing/zero; its reporting period is shown and margin remains unavailable.
+
+- Session-only SEC contact in Settings, with immediate use and no persistence. Independent SEC review fixes reject overlapping revenue periods and correctly report a decline to zero revenue.

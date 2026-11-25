@@ -186,3 +186,44 @@ def test_mismatched_cash_flow_accessions_withhold_amount():
     ]
     result = normalize_company_facts(data, "2025-03-01")
     assert result["free_cash_flow_usd"] is None and result["fcf_margin_pct"] is None
+
+
+@pytest.mark.parametrize(
+    "contact",
+    [
+        "",
+        "no-contact",
+        "Test a@example.invalid\nInjected: x",
+        "Test\tuser@example.invalid",
+        "Tést user@example.invalid",
+        "x" * 260 + " user@example.invalid",
+    ],
+)
+def test_declared_contact_rejects_unsafe_headers_without_echoing_value(contact):
+    from techpulse.sec import declared_user_agent
+
+    with pytest.raises(ProviderError) as error:
+        declared_user_agent(contact)
+    if contact:
+        assert contact not in str(error.value)
+
+
+def test_growth_rejects_overlapping_annual_periods():
+    data = payload()
+    data["facts"]["us-gaap"]["Revenues"]["units"]["USD"] = [
+        fact(120),
+        fact(100, start="2023-01-01", end="2024-01-31"),
+    ]
+    result = normalize_company_facts(data, "2025-03-01")
+    assert result["revenue_growth_pct"] is None
+
+
+def test_zero_current_revenue_reports_full_decline_but_no_margin():
+    data = payload()
+    data["facts"]["us-gaap"]["Revenues"]["units"]["USD"] = [
+        fact(0),
+        fact(100, start="2023-01-01", end="2023-12-31"),
+    ]
+    result = normalize_company_facts(data, "2025-03-01")
+    assert result["revenue_growth_pct"] == -100
+    assert result["net_margin_pct"] is None and result["fcf_margin_pct"] is None

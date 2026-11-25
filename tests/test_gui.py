@@ -72,3 +72,63 @@ def test_sec_session_preview_renders_without_polluting_reports(qtbot, tmp_path):
     assert window.page_errors == []
     assert "Fictional SEC UI probe" not in json.dumps(snapshot(window.store, "research"))
     window.close()
+
+
+def test_sec_contact_is_validated_session_only_and_resets(qtbot, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QLineEdit
+
+    monkeypatch.delenv("SEC_USER_AGENT", raising=False)
+    path = tmp_path / "contact.db"
+    window = MainWindow(Store(path))
+    qtbot.addWidget(window)
+    errors = []
+    monkeypatch.setattr(window, "error", errors.append)
+    window.nav.setCurrentRow(15)
+    assert window.findChild(QLineEdit, "secContact") is not None
+    marker = "TechPulse SESSION_ONLY_CONTACT@example.invalid"
+    assert window.set_sec_contact(marker)
+    assert window.sec_user_agent == marker
+    assert not window.set_sec_contact("invalid")
+    assert errors and window.sec_user_agent == marker
+    assert marker not in "\n".join(window.store.db.iterdump())
+    assert marker not in json.dumps(snapshot(window.store, "demo"))
+    assert window.set_sec_contact("") and not window.sec_user_agent
+    window.set_sec_contact(marker)
+    window.close()
+    reopened = MainWindow(Store(path))
+    qtbot.addWidget(reopened)
+    assert not reopened.sec_user_agent
+    reopened.close()
+
+
+def test_sec_fetch_uses_session_contact_then_environment(qtbot, tmp_path, monkeypatch):
+    from techpulse import app as app_module
+    from techpulse import sec as sec_module
+
+    calls = []
+
+    class FakeProvider:
+        def __init__(self, contact):
+            calls.append(contact)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def fundamentals_for(self, *args):
+            return []
+
+    monkeypatch.setenv("SEC_USER_AGENT", "Environment env@example.invalid")
+    monkeypatch.setattr(sec_module, "SECProvider", FakeProvider)
+    monkeypatch.setattr(app_module.QInputDialog, "getText", lambda *args, **kwargs: ("1", True))
+    window = MainWindow(Store(tmp_path / "fetch-contact.db"))
+    qtbot.addWidget(window)
+    monkeypatch.setattr(window, "run_provider", lambda title, fn: fn())
+    window.set_sec_contact("Session session@example.invalid")
+    window.fetch_sec()
+    window.set_sec_contact("")
+    window.fetch_sec()
+    assert calls == ["Session session@example.invalid", "Environment env@example.invalid"]
+    window.close()

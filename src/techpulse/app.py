@@ -210,6 +210,7 @@ class MainWindow(QMainWindow):
         self.active_symbol = "SYN-AI"
         self.theme = self.store.setting("theme", "dark")
         self.live_results = []
+        self.sec_user_agent = ""  # Explicit session-only contact, never persisted.
         self.worker: Worker | None = None
         self.page_errors: list[str] = []
         self.setWindowTitle("TechPulse · Financial research terminal")
@@ -1332,10 +1333,10 @@ class MainWindow(QMainWindow):
     def fetch_sec(self):
         from .sec import SECProvider
 
-        contact = os.environ.get("SEC_USER_AGENT", "")
+        contact = self.sec_user_agent or os.environ.get("SEC_USER_AGENT", "")
         if not contact:
             self.error(
-                "Set SEC_USER_AGENT to your application name and real contact email, then restart. No API key required. Alternatively open an official companyfacts JSON locally."
+                "Add your real SEC contact in Settings for this session, or set SEC_USER_AGENT before launch. No API key required. You can also open a companyfacts JSON locally."
             )
             return
         raw, ok = QInputDialog.getText(
@@ -1477,6 +1478,23 @@ class MainWindow(QMainWindow):
 
             self.run_provider("USAspending", fetch)
 
+    def set_sec_contact(self, value):
+        from .providers import ProviderError
+        from .sec import declared_user_agent
+
+        try:
+            contact = declared_user_agent(value) if value.strip() else ""
+        except ProviderError as exc:
+            self.error(str(exc))
+            return False
+        self.sec_user_agent = contact
+        self.status.setText(
+            "SEC contact set for this session only"
+            if contact
+            else "SEC session contact cleared; environment fallback applies"
+        )
+        return True
+
     def settings(self):
         frame, layout = card("Appearance & local storage")
         theme = QComboBox()
@@ -1497,6 +1515,31 @@ class MainWindow(QMainWindow):
             )
         )
         layout.addWidget(button("Create SQLite backup", self.backup))
+        self.content.addWidget(frame)
+        frame, layout = card("SEC access · contact for this session")
+        contact = QLineEdit(self.sec_user_agent)
+        contact.setObjectName("secContact")
+        contact.setAccessibleName("SEC application name and contact email")
+        contact.setPlaceholderText("Your application name and real contact email")
+        contact.setMaxLength(256)
+        layout.addWidget(contact)
+        layout.addWidget(
+            label(
+                "Sent to the SEC in the User-Agent header when you request live SEC data. Kept in memory only; not written to SQLite, reports, backups or Windows settings. Use your real contact. Leaving blank restores SEC_USER_AGENT from the environment, if configured. Changing this field does not cancel an active request.",
+                "muted",
+            )
+        )
+
+        def apply_contact():
+            self.set_sec_contact(contact.text())
+
+        layout.addWidget(button("Use contact for this session", apply_contact, True))
+
+        def clear_contact():
+            self.set_sec_contact("")
+            contact.clear()
+
+        layout.addWidget(button("Clear session contact", clear_contact))
         self.content.addWidget(frame)
         frame, layout = card("Research score weights · sum must equal 100")
         weights = self.store.setting(

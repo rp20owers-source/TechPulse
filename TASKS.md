@@ -25,3 +25,5 @@ G02 usability: SEC preview accepts an exact ticker or numeric CIK; current offic
 D02: per-user desktop source installation completed on the development host, independent of workspace runtime, with dedicated dependencies and shortcuts. Native installed smoke passed. Future code updates must rerun packaging/install_windows.ps1 to refresh the installed copy; public frozen-binary/clean-machine gates remain open.
 
 DEV01: opened source in VS Code, configured project-local locked .venv and Run/Debug/test/lint/type tasks with isolated data, fixed SEC standalone FCF amount availability and exposed its period;123 tests passed. Installed source refreshed safely. Continue G02; SEC contact/live verification and independent review remain pending.
+
+G03 update2026-11-25: SEC contact can be supplied in Settings for one session; environment fallback retained. Targeted independent normalization review completed and two growth defects corrected/rechecked (overlapping annual periods, zero-current-revenue decline). Live verification still needs user-declared contact; no score generation enabled.
